@@ -1,0 +1,144 @@
+<?xml version="1.0" ?>
+<!DOCTYPE coverage SYSTEM 'http://cobertura.sourceforge.net/xml/coverage-04.dtd'>
+<coverage line-rate="0.973" lines-covered="108" lines-valid="111" branch-rate="1.0" branches-covered="1.0" branches-rate="1.0" complexity="1.0" version="1.9" timestamp="1780659496">
+	<sources>
+		<source>/home/renich/Projects/crystal/crypto/crystal-dbus-native/src/crystal-dbus-native/</source>
+	</sources>
+	<packages>
+		<package name="spec_runner" line-rate="0.973" lines-covered="108" lines-valid="111" branch-rate="1.0" complexity="1.0">
+			<classes>
+				<class name="signature_validator_cr__0" filename="signature_validator.cr" branch-rate="1.0" complexity="1.0" line-rate="1.000">
+					<lines>
+						<line number="6" hits="1"/>
+						<line number="7" hits="1"/>
+						<line number="8" hits="1"/>
+						<line number="11" hits="1"/>
+						<line number="12" hits="1"/>
+						<line number="13" hits="1"/>
+						<line number="14" hits="1"/>
+						<line number="17" hits="3"/>
+						<line number="18" hits="2"/>
+						<line number="19" hits="2"/>
+						<line number="20" hits="1"/>
+						<line number="21" hits="1"/>
+						<line number="22" hits="2"/>
+						<line number="24" hits="1"/>
+						<line number="25" hits="1"/>
+						<line number="26" hits="1"/>
+						<line number="28" hits="1"/>
+						<line number="29" hits="1"/>
+						<line number="30" hits="2"/>
+						<line number="32" hits="2"/>
+						<line number="33" hits="1"/>
+						<line number="34" hits="1"/>
+						<line number="35" hits="1"/>
+						<line number="37" hits="1"/>
+						<line number="38" hits="1"/>
+						<line number="39" hits="1"/>
+						<line number="41" hits="1"/>
+						<line number="42" hits="1"/>
+						<line number="43" hits="2"/>
+						<line number="46" hits="7"/>
+						<line number="49" hits="1"/>
+						<line number="52" hits="2"/>
+						<line number="53" hits="2"/>
+					</lines>
+				</class>
+				<class name="sasl_authenticator_cr__1" filename="sasl_authenticator.cr" branch-rate="1.0" complexity="1.0" line-rate="0.933">
+					<lines>
+						<line number="5" hits="1"/>
+						<line number="6" hits="1"/>
+						<line number="8" hits="1"/>
+						<line number="9" hits="1"/>
+						<line number="10" hits="1"/>
+						<line number="12" hits="1"/>
+						<line number="13" hits="2"/>
+						<line number="15" hits="1"/>
+						<line number="18" hits="1"/>
+						<line number="19" hits="0"/>
+						<line number="22" hits="1"/>
+						<line number="23" hits="1"/>
+						<line number="24" hits="1"/>
+						<line number="25" hits="1"/>
+						<line number="28" hits="2"/>
+					</lines>
+				</class>
+				<class name="dbus_message_cr__2" filename="dbus_message.cr" branch-rate="1.0" complexity="1.0" line-rate="1.000">
+					<lines>
+						<line number="9" hits="4"/>
+						<line number="12" hits="3"/>
+						<line number="13" hits="2"/>
+						<line number="14" hits="1"/>
+						<line number="15" hits="4"/>
+						<line number="17" hits="1"/>
+						<line number="20" hits="2"/>
+						<line number="21" hits="4"/>
+						<line number="22" hits="2"/>
+						<line number="24" hits="4"/>
+						<line number="25" hits="4"/>
+						<line number="27" hits="2"/>
+						<line number="28" hits="2"/>
+						<line number="31" hits="1"/>
+					</lines>
+				</class>
+				<class name="dbus_connection_cr__3" filename="dbus_connection.cr" branch-rate="1.0" complexity="1.0" line-rate="1.000">
+					<lines>
+						<line number="5" hits="3"/>
+						<line number="6" hits="1"/>
+						<line number="12" hits="2"/>
+						<line number="13" hits="1"/>
+					</lines>
+				</class>
+				<class name="secure_fd_passer_cr__4" filename="secure_fd_passer.cr" branch-rate="1.0" complexity="1.0" line-rate="0.956">
+					<lines>
+						<line number="2" hits="2"/>
+						<line number="3" hits="1"/>
+						<line number="14" hits="2"/>
+						<line number="15" hits="1"/>
+						<line number="18" hits="1"/>
+						<line number="19" hits="1"/>
+						<line number="22" hits="1"/>
+						<line number="23" hits="1"/>
+						<line number="26" hits="2"/>
+						<line number="27" hits="1"/>
+						<line number="28" hits="1"/>
+						<line number="31" hits="1"/>
+						<line number="32" hits="0"/>
+						<line number="36" hits="1"/>
+						<line number="40" hits="1"/>
+						<line number="41" hits="1"/>
+						<line number="46" hits="1"/>
+						<line number="47" hits="1"/>
+						<line number="48" hits="1"/>
+						<line number="53" hits="1"/>
+						<line number="54" hits="1"/>
+						<line number="58" hits="1"/>
+						<line number="60" hits="1"/>
+						<line number="63" hits="1"/>
+						<line number="64" hits="1"/>
+						<line number="65" hits="1"/>
+						<line number="69" hits="4"/>
+						<line number="70" hits="1"/>
+						<line number="71" hits="1"/>
+						<line number="74" hits="1"/>
+						<line number="78" hits="1"/>
+						<line number="79" hits="1"/>
+						<line number="84" hits="1"/>
+						<line number="85" hits="1"/>
+						<line number="90" hits="1"/>
+						<line number="91" hits="1"/>
+						<line number="92" hits="0"/>
+						<line number="95" hits="1"/>
+						<line number="97" hits="1"/>
+						<line number="98" hits="1"/>
+						<line number="99" hits="3"/>
+						<line number="100" hits="1"/>
+						<line number="101" hits="1"/>
+						<line number="102" hits="1"/>
+						<line number="103" hits="1"/>
+					</lines>
+				</class>
+			</classes>
+		</package>
+	</packages>
+</coverage>

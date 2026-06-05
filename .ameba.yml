@@ -1,0 +1,6 @@
+Lint/UselessAssign:
+  Excluded:
+    - spec/secure_fd_passer_spec.cr
+
+Metrics/CyclomaticComplexity:
+  MaxComplexity: 20

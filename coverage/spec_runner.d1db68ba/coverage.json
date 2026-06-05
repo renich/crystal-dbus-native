@@ -1,0 +1,16 @@
+{
+  "files": [
+    {"file": "/home/renich/Projects/crystal/crypto/crystal-dbus-native/src/crystal-dbus-native/signature_validator.cr", "percent_covered": "100.00", "covered_lines": "33", "total_lines": "33"},
+    {"file": "/home/renich/Projects/crystal/crypto/crystal-dbus-native/src/crystal-dbus-native/sasl_authenticator.cr", "percent_covered": "93.33", "covered_lines": "14", "total_lines": "15"},
+    {"file": "/home/renich/Projects/crystal/crypto/crystal-dbus-native/src/crystal-dbus-native/dbus_message.cr", "percent_covered": "100.00", "covered_lines": "14", "total_lines": "14"},
+    {"file": "/home/renich/Projects/crystal/crypto/crystal-dbus-native/src/crystal-dbus-native/dbus_connection.cr", "percent_covered": "100.00", "covered_lines": "4", "total_lines": "4"},
+    {"file": "/home/renich/Projects/crystal/crypto/crystal-dbus-native/src/crystal-dbus-native/secure_fd_passer.cr", "percent_covered": "95.56", "covered_lines": "43", "total_lines": "45"}
+  ],
+  "percent_covered": "97.30",
+  "covered_lines": 108,
+  "total_lines": 111,
+  "percent_low": 25,
+  "percent_high": 75,
+  "command": "spec_runner",
+  "date": "2026-06-05 05:38:38"
+}
