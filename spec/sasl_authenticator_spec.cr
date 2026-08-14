@@ -67,7 +67,7 @@ describe Crystal::Dbus::Native::SASLAuthenticator do
           conn.read_byte
           conn.gets("\r\n")
           # Just wait and close after long
-          sleep 0.2
+          sleep 0.2.seconds
           conn.close unless conn.closed?
         end
 

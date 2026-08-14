@@ -1,9 +1,3 @@
-class UNIXSocket < Socket
-  def self.new(family : Socket::Family, type : Socket::Type, protocol : Socket::Protocol = Socket::Protocol::IP)
-    super(family, type, protocol)
-  end
-end
-
 require "socket"
 
 module Crystal::Dbus::Native
@@ -94,18 +88,25 @@ module Crystal::Dbus::Native
 
       received_fds = [] of Int32
 
-      if msg.msg_controllen > 0
-        cmsg = msg.msg_control.as(LibC::Cmsghdr*)
-        if cmsg.value.cmsg_level == 1 && cmsg.value.cmsg_type == 1
-          fd_count = (cmsg.value.cmsg_len - cmsg_align(SIZEOF_CMSGHDR)) // sizeof(Int32)
-          fd_ptr = (msg.msg_control.as(UInt8*) + cmsg_align(SIZEOF_CMSGHDR)).as(Int32*)
-          fd_count.times do |i|
-            received_fds << fd_ptr[i]
+      begin
+        if msg.msg_controllen > 0
+          cmsg = msg.msg_control.as(LibC::Cmsghdr*)
+          if cmsg.value.cmsg_level == 1 && cmsg.value.cmsg_type == 1
+            fd_count = (cmsg.value.cmsg_len - cmsg_align(SIZEOF_CMSGHDR)) // sizeof(Int32)
+            fd_ptr = (msg.msg_control.as(UInt8*) + cmsg_align(SIZEOF_CMSGHDR)).as(Int32*)
+            fd_count.times do |i|
+              received_fds << fd_ptr[i]
+            end
           end
         end
-      end
 
-      {res.to_i, received_fds, nil}
+        {res.to_i, received_fds, nil}
+      rescue ex
+        received_fds.each do |descriptor|
+          LibC.close(descriptor)
+        end
+        raise ex
+      end
     end
   end
 end
