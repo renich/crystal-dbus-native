@@ -1,0 +1,11 @@
+In spec/sasl_authenticator_spec.cr:70:11
+
+ 70 | sleep 0.2
+      ^----
+Warning: Deprecated ::sleep. Use `::sleep(Time::Span)` instead
+
+A total of 1 warnings were found.
+....................
+
+Finished in 101.66 milliseconds
+20 examples, 0 failures, 0 errors, 0 pending
