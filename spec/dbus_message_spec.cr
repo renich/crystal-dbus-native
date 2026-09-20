@@ -2,42 +2,71 @@ require "./spec_helper"
 require "socket"
 
 describe Crystal::Dbus::Native::DBusMessage do
-  describe ".parse" do
-    it "parses a valid little-endian header" do
-      server = UNIXServer.new("/tmp/test_dbus_msg.sock")
-      begin
-        client = UNIXSocket.new("/tmp/test_dbus_msg.sock")
-        conn = server.accept
+  describe ".parse and #serialize" do
+    it "round-trips a method call with header fields and body" do
+      body_payload = "hello world".to_slice
+      msg = Crystal::Dbus::Native::DBusMessage.method_call(
+        serial: 42_u32,
+        path: "/org/test/Object",
+        interface: "org.test.Interface",
+        member: "TestMethod",
+        destination: "org.test.Destination",
+        signature: "s",
+        body: body_payload
+      )
 
-        header = IO::Memory.new
-        header.write_byte('l'.ord.to_u8)
-        header.write_byte(1_u8)
-        header.write_byte(0_u8)
-        header.write_byte(1_u8)
-        header.write_bytes(12_u32, IO::ByteFormat::LittleEndian)
-        header.write_bytes(42_u32, IO::ByteFormat::LittleEndian)
-
-        conn.write(header.to_slice)
-        conn.flush
-
-        msg = Crystal::Dbus::Native::DBusMessage.parse(client)
-        msg.endian.should eq(Crystal::Dbus::Native::Endianness::Little)
-        msg.body_length.should eq(12)
-        msg.serial.should eq(42)
-
-        client.close
-        conn.close
-      ensure
-        File.delete("/tmp/test_dbus_msg.sock") if File.exists?("/tmp/test_dbus_msg.sock")
+      client, server = UNIXSocket.pair(Socket::Type::STREAM)
+      spawn do
+        msg.serialize(server)
+        server.flush
+        server.close
       end
+
+      parsed = Crystal::Dbus::Native::DBusMessage.parse(client)
+      client.close
+
+      parsed.endian.should eq(Crystal::Dbus::Native::Endianness::Little)
+      parsed.message_type.should eq(Crystal::Dbus::Native::MessageType::MethodCall)
+      parsed.serial.should eq(42_u32)
+      parsed.path.should eq("/org/test/Object")
+      parsed.interface.should eq("org.test.Interface")
+      parsed.member.should eq("TestMethod")
+      parsed.destination.should eq("org.test.Destination")
+      parsed.signature.should eq("s")
+      parsed.body.should eq(body_payload)
+    end
+
+    it "round-trips a method return message" do
+      body_payload = Bytes[1, 2, 3, 4]
+      msg = Crystal::Dbus::Native::DBusMessage.method_return(
+        serial: 101_u32,
+        reply_serial: 42_u32,
+        destination: ":1.99",
+        signature: "ay",
+        body: body_payload
+      )
+
+      client, server = UNIXSocket.pair(Socket::Type::STREAM)
+      spawn do
+        msg.serialize(server)
+        server.flush
+        server.close
+      end
+
+      parsed = Crystal::Dbus::Native::DBusMessage.parse(client)
+      client.close
+
+      parsed.message_type.should eq(Crystal::Dbus::Native::MessageType::MethodReturn)
+      parsed.serial.should eq(101_u32)
+      parsed.reply_serial.should eq(42_u32)
+      parsed.destination.should eq(":1.99")
+      parsed.signature.should eq("ay")
+      parsed.body.should eq(body_payload)
     end
 
     it "raises exception if total size exceeds max_size" do
-      server = UNIXServer.new("/tmp/test_dbus_msg_large.sock")
-      begin
-        client = UNIXSocket.new("/tmp/test_dbus_msg_large.sock")
-        conn = server.accept
-
+      client, server = UNIXSocket.pair(Socket::Type::STREAM)
+      spawn do
         header = IO::Memory.new
         header.write_byte('l'.ord.to_u8)
         header.write_byte(1_u8)
@@ -45,65 +74,73 @@ describe Crystal::Dbus::Native::DBusMessage do
         header.write_byte(1_u8)
         header.write_bytes(128_u32, IO::ByteFormat::LittleEndian)
         header.write_bytes(42_u32, IO::ByteFormat::LittleEndian)
-
-        conn.write(header.to_slice)
-        conn.flush
-
-        expect_raises(Crystal::Dbus::Native::MessageError, "exceeds max") do
-          Crystal::Dbus::Native::DBusMessage.parse(client, 100)
-        end
-
-        client.close
-        conn.close
-      ensure
-        File.delete("/tmp/test_dbus_msg_large.sock") if File.exists?("/tmp/test_dbus_msg_large.sock")
+        header.write_bytes(0_u32, IO::ByteFormat::LittleEndian)
+        server.write(header.to_slice)
+        server.flush
+        server.close
       end
+
+      expect_raises(Crystal::Dbus::Native::MessageError, "Message length exceeds maximum") do
+        Crystal::Dbus::Native::DBusMessage.parse(client, 100_u32)
+      end
+      client.close
     end
 
     it "raises on premature connection close" do
-      server = UNIXServer.new("/tmp/test_dbus_msg_close.sock")
-      begin
-        client = UNIXSocket.new("/tmp/test_dbus_msg_close.sock")
-        conn = server.accept
-
-        conn.write(Bytes[1, 2, 3])
-        conn.close
-
-        expect_raises(Crystal::Dbus::Native::ConnectionClosedError, "Connection closed") do
-          Crystal::Dbus::Native::DBusMessage.parse(client)
-        end
-        client.close
-      ensure
-        File.delete("/tmp/test_dbus_msg_close.sock") if File.exists?("/tmp/test_dbus_msg_close.sock")
+      client, server = UNIXSocket.pair(Socket::Type::STREAM)
+      spawn do
+        server.write(Bytes[1, 2, 3])
+        server.close
       end
+
+      expect_raises(Crystal::Dbus::Native::ConnectionClosedError, "Connection closed") do
+        Crystal::Dbus::Native::DBusMessage.parse(client)
+      end
+      client.close
     end
 
-    it "raises exception on integer overflow of body_length" do
-      server = UNIXServer.new("/tmp/test_dbus_msg_overflow.sock")
-      begin
-        client = UNIXSocket.new("/tmp/test_dbus_msg_overflow.sock")
-        conn = server.accept
+    it "raises exception on unknown message type" do
+      client, server = UNIXSocket.pair(Socket::Type::STREAM)
+      spawn do
+        header = IO::Memory.new
+        header.write_byte('l'.ord.to_u8)
+        header.write_byte(99_u8)
+        header.write_byte(0_u8)
+        header.write_byte(1_u8)
+        header.write_bytes(0_u32, IO::ByteFormat::LittleEndian)
+        header.write_bytes(1_u32, IO::ByteFormat::LittleEndian)
+        header.write_bytes(0_u32, IO::ByteFormat::LittleEndian)
+        server.write(header.to_slice)
+        server.flush
+        server.close
+      end
 
+      expect_raises(Crystal::Dbus::Native::MessageError, "Unknown message type") do
+        Crystal::Dbus::Native::DBusMessage.parse(client)
+      end
+      client.close
+    end
+
+    it "raises exception on unsupported protocol version" do
+      client, server = UNIXSocket.pair(Socket::Type::STREAM)
+      spawn do
         header = IO::Memory.new
         header.write_byte('l'.ord.to_u8)
         header.write_byte(1_u8)
         header.write_byte(0_u8)
-        header.write_byte(1_u8)
-        header.write_bytes(UInt32::MAX - 5, IO::ByteFormat::LittleEndian)
-        header.write_bytes(42_u32, IO::ByteFormat::LittleEndian)
-
-        conn.write(header.to_slice)
-        conn.flush
-
-        expect_raises(Crystal::Dbus::Native::MessageError, "exceeds max") do
-          Crystal::Dbus::Native::DBusMessage.parse(client, 100)
-        end
-
-        client.close
-        conn.close
-      ensure
-        File.delete("/tmp/test_dbus_msg_overflow.sock") if File.exists?("/tmp/test_dbus_msg_overflow.sock")
+        header.write_byte(2_u8)
+        header.write_bytes(0_u32, IO::ByteFormat::LittleEndian)
+        header.write_bytes(1_u32, IO::ByteFormat::LittleEndian)
+        header.write_bytes(0_u32, IO::ByteFormat::LittleEndian)
+        server.write(header.to_slice)
+        server.flush
+        server.close
       end
+
+      expect_raises(Crystal::Dbus::Native::MessageError, "Unsupported D-Bus protocol version") do
+        Crystal::Dbus::Native::DBusMessage.parse(client)
+      end
+      client.close
     end
   end
 end

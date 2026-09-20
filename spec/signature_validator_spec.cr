@@ -19,6 +19,12 @@ describe Crystal::Dbus::Native::SignatureValidator do
       Crystal::Dbus::Native::SignatureValidator.validate("a{ss}").should be_nil
     end
 
+    it "rejects container types and variants as dictionary keys" do
+      expect_raises(Crystal::Dbus::Native::SignatureError, "Dict key must be a basic type") do
+        Crystal::Dbus::Native::SignatureValidator.validate("a{vs}")
+      end
+    end
+
     it "validates structs" do
       Crystal::Dbus::Native::SignatureValidator.validate("(is)").should be_nil
       Crystal::Dbus::Native::SignatureValidator.validate("(i(ss))").should be_nil
