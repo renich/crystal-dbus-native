@@ -10,6 +10,27 @@ and this project adheres to `Semantic Versioning <https://semver.org/spec/v2.0.0
 [Unreleased]
 ============
 
+[0.1.2] - 2026-09-19
+====================
+
+.. rubric:: Security
+
+- Hardened ``SecureFDPasser`` ancillary message control buffer with ``MSG_CMSG_CLOEXEC`` to prevent child descriptor leakage.
+- Added ``MSG_CTRUNC`` detection in ``SecureFDPasser`` to abort on truncated control buffers.
+- Hardened ``SignatureValidator`` to reject non-basic container and variant types as dictionary keys (``a{vs}``).
+- Guaranteed socket timeout restoration in ``SASLAuthenticator`` via defensive ``ensure`` blocks.
+
+.. rubric:: Added
+
+- Completed D-Bus 16-byte fixed header serialization and parsing with 8-byte container boundary alignment.
+- Added support for ``NEGOTIATE_UNIX_FD`` in ``SASLAuthenticator``.
+- Integrated ``Crystal::EventLoop.current.wait_readable`` and ``wait_writable`` into socket retry loops for non-blocking I/O.
+- Converted all tests to in-memory ``UNIXSocket.pair`` to eliminate filesystem race conditions and leaks.
+
+.. rubric:: Refactored
+
+- Extracted ``apply_field`` in ``DBusMessage`` to reduce cyclomatic complexity and improve modularity.
+
 [0.1.1] - 2026-08-13
 ====================
 
