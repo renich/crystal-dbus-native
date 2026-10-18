@@ -1,6 +1,7 @@
 require "./spec_helper"
 require "socket"
 
+# Verifies [FUNC-001] / [TECH-001], [TECH-005]
 describe Crystal::Dbus::Native::SASLAuthenticator do
   describe ".authenticate" do
     it "authenticates successfully with UID" do

@@ -10,12 +10,15 @@ and this project adheres to `Semantic Versioning <https://semver.org/spec/v2.0.0
 [Unreleased]
 ============
 
+[0.3.1] - 2026-10-18
+====================
+
 .. rubric:: Added
 
-- Added Phase 2 (``v0.4.0``) functional and technical specifications (``[FUNC-006]``, ``[FUNC-007]``, ``[TECH-006]``, ``[TECH-007]``) and ``ADR-002`` covering typed ``org.freedesktop.DBus.Properties``/``Introspectable`` client proxies, multiplexed fiber reply routing, and ``AddMatch``/``RemoveMatch`` signal subscriptions.
-- Added D2 architecture and phased roadmap diagrams (``docs/diagrams/architecture.d2``, ``docs/diagrams/roadmaps/roadmap.d2``, ``docs/diagrams/roadmaps/phase-1-mvp.d2``, ``docs/diagrams/roadmaps/phase-2-enhancement.d2``) compiled to SVG.
-- Added dependency-tracked phased roadmaps (``TASK-101``..``TASK-105`` and ``TASK-201``..``TASK-204``) with explicit ``Fulfills``, ``Blocked By``, ``Unblocks``, and ``Critical Path`` declarations.
-- Added project visual identity assets (``assets/banner.svg`` and ``assets/icon.svg``) and aligned ``README.md`` and ``CONTRIBUTING.rst`` with the canonical Crystal library standard.
+- Added ``ReplyRouter`` (``src/crystal-dbus-native/reply_router.cr``) with buffered per-call ``Channel(DBusMessage).new(1)`` pending reply demultiplexing and ``ensure``-guarded serial cleanup so concurrent Crystal fibers execute ``DBusConnection#call`` without head-of-line blocking (``[FUNC-007]``/``[TECH-007]``).
+- Added ``DBusConnection#subscribe_signal`` and ``DBusConnection#unsubscribe_signal`` with ``org.freedesktop.DBus.AddMatch``/``RemoveMatch`` integration and non-blocking delivery to bounded ``Channel(DBusMessage).new(64)`` subscriber channels (``[FUNC-007]``/``[TECH-007]``).
+- Added ``PropertiesProxy`` (``#get``, ``#set``, ``#get_all``, and ``.decode_properties_changed``) and ``IntrospectableProxy`` (``#introspect``) in ``src/crystal-dbus-native/proxies.cr`` (``[FUNC-006]``/``[TECH-006]``).
+- Added ``ADR-002`` (``docs/adrs/2026-10-18-phase-2-multiplexed-rpc-and-proxies.rst``), D2 architecture and roadmap diagrams (``docs/diagrams/``), dependency-tracked phased roadmaps (``TASK-101``..``TASK-105`` and ``TASK-201``..``TASK-204``), and visual identity assets (``assets/banner.svg`` and ``assets/icon.svg``).
 
 [0.3.0] - 2026-10-18
 ====================

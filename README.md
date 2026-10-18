@@ -7,10 +7,10 @@
 </p>
 
 <p align="center">
-  <a href="https://gitlab.com/renich/crystal-dbus-native/-/releases"><img src="https://img.shields.io/badge/version-v0.3.0-blue.svg?style=flat-square" alt="Version 0.3.0" /></a>
+  <a href="https://gitlab.com/renich/crystal-dbus-native/-/releases"><img src="https://img.shields.io/badge/version-v0.3.1-blue.svg?style=flat-square" alt="Version 0.3.1" /></a>
   <a href="https://crystal-lang.org/"><img src="https://img.shields.io/badge/crystal-%3E%3D%201.21.0-black.svg?style=flat-square&logo=crystal&logoColor=white" alt="Crystal >= 1.21.0" /></a>
   <a href="https://gitlab.com/renich/crystal-dbus-native/-/pipelines"><img src="https://img.shields.io/badge/pipeline-passing-brightgreen.svg?style=flat-square&logo=gitlab" alt="GitLab CI Passing" /></a>
-  <a href="https://gitlab.com/renich/crystal-dbus-native"><img src="https://img.shields.io/badge/specs-42%20passing-success.svg?style=flat-square&logo=crystal" alt="Specs Passing" /></a>
+  <a href="https://gitlab.com/renich/crystal-dbus-native"><img src="https://img.shields.io/badge/specs-52%20passing-success.svg?style=flat-square&logo=crystal" alt="Specs Passing" /></a>
   <a href="https://github.com/crystal-ameba/ameba"><img src="https://img.shields.io/badge/ameba-0%20violations-brightgreen.svg?style=flat-square" alt="Ameba Clean" /></a>
   <a href="https://github.com/kdairatchi/flaw"><img src="https://img.shields.io/badge/flaw-0%20findings-brightgreen.svg?style=flat-square" alt="Flaw Clean" /></a>
 </p>
@@ -24,21 +24,21 @@
 
 > **GitLab Project Metadata**:
 > - **Description**: Native, zero-dependency D-Bus wire protocol for Crystal featuring BodyCodec marshaling, SASL EXTERNAL authentication, and SCM_RIGHTS UNIX file descriptor passing.
-> - **Topics and Tags**: `crystal`, `crystal-lang`, `dbus`, `ipc`, `linux`, `unix-sockets`, `scm-rights`, `zero-dependencies`, `security`, `gplv3`
+> - **Topics/Tags**: `crystal`, `crystal-lang`, `dbus`, `ipc`, `linux`, `unix-sockets`, `scm-rights`, `zero-dependencies`, `security`, `gplv3`
 
 ---
 
 ## Overview
 
-**crystal-dbus-native** provides a pure, zero-dependency Crystal implementation of the **D-Bus wire protocol v1**, general-purpose body marshaling (`BodyCodec` and `Variant`), SASL `EXTERNAL` authentication with `NEGOTIATE_UNIX_FD` negotiation, and out-of-band UNIX domain socket file descriptor passing (`SCM_RIGHTS`).
+**crystal-dbus-native** provides a pure, zero-dependency Crystal implementation of the **D-Bus wire protocol v1**, general-purpose body marshaling (`BodyCodec` and `Variant`), SASL `EXTERNAL` authentication with `NEGOTIATE_UNIX_FD` negotiation, out-of-band UNIX domain socket file descriptor passing (`SCM_RIGHTS`), multiplexed fiber RPC routing (`ReplyRouter`), match-rule signal subscriptions, and typed `PropertiesProxy`/`IntrospectableProxy` client helpers.
 
 ### Key Highlights
 
 1. **Zero C-Library Dependencies**: Communicates directly with Linux system and session UNIX domain sockets without `libdbus-1` or `libsystemd` FFI bindings.
 2. **Complete Body Marshaling (`BodyCodec` & `Variant`)**: Encodes and decodes all basic D-Bus types, nested structs (`StructValue`), dictionaries (`a{sv}`), `Variant`, `ObjectPath`, `Signature`, and `UnixFD` in both little-endian and big-endian formats with 1, 2, 4, and 8-byte alignment enforcement.
 3. **Secure `SCM_RIGHTS` File Descriptor Passing**: Wraps `sendmsg`/`recvmsg` with `MSG_CMSG_CLOEXEC` and guarantees automatic descriptor cleanup on `MSG_CTRUNC` truncation or framing errors.
-4. **RPC Correlation & Signal Queueing**: `DBusConnection#call` correlates request-reply serials while preserving interleaved `Signal` frames in a thread-safe queue (`poll_signal`).
-5. **Defensive Signature Validation**: Validates D-Bus signatures (`SignatureValidator`) up to 255 bytes with independent 32-level array and struct depth limits.
+4. **Multiplexed Fiber RPC & Signal Subscriptions**: `ReplyRouter` demultiplexes out-of-order replies across concurrent fibers without head-of-line blocking and dispatches `AddMatch` signal subscriptions to bounded `Channel(DBusMessage).new(64)` channels.
+5. **Standard Interface Client Proxies**: `PropertiesProxy` (`get`, `set`, `get_all`, `decode_properties_changed`) and `IntrospectableProxy` (`introspect`) provide strongly-typed access to standard freedesktop interfaces.
 
 ---
 
@@ -50,7 +50,7 @@ Add `crystal-dbus-native` to your application's `shard.yml`:
 dependencies:
   crystal-dbus-native:
     gitlab: renich/crystal-dbus-native
-    version: ~> 0.3.0
+    version: ~> 0.3.1
 ```
 
 Then install the shard:
@@ -79,6 +79,27 @@ reply = connection.call(
   member: "GetId"
 )
 puts "Bus ID: #{reply.decode_body.first}"
+
+# Inspect XML interfaces or read properties via typed client proxies
+introspect = Crystal::Dbus::Native::IntrospectableProxy.new(
+  connection,
+  "org.freedesktop.DBus",
+  "/org/freedesktop/DBus"
+)
+puts introspect.introspect
+
+props = Crystal::Dbus::Native::PropertiesProxy.new(
+  connection,
+  "org.freedesktop.DBus",
+  "/org/freedesktop/DBus"
+)
+features = props.get("org.freedesktop.DBus", "Features")
+puts "Bus features signature: #{features.signature}"
+
+# Subscribe to D-Bus signals via AddMatch
+rule = "type='signal',interface='org.freedesktop.DBus',member='NameOwnerChanged'"
+sig_ch = connection.subscribe_signal(rule)
+connection.unsubscribe_signal(rule, sig_ch)
 
 connection.close
 ```

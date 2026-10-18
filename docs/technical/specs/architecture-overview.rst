@@ -28,7 +28,9 @@ The library source is organized under the ``Crystal::Dbus::Native`` namespace:
 * ``src/crystal-dbus-native/dbus_message.cr``: Framed D-Bus wire message representation (``DBusMessage``, ``Endianness``, ``MessageType``).
 * ``src/crystal-dbus-native/sasl_authenticator.cr``: Client-side SASL ``EXTERNAL`` and ``NEGOTIATE_UNIX_FD`` handshake (``SASLAuthenticator``).
 * ``src/crystal-dbus-native/secure_fd_passer.cr``: ``SCM_RIGHTS`` ancillary file descriptor transport (``SecureFDPasser``).
-* ``src/crystal-dbus-native/dbus_connection.cr``: UNIX domain socket connection, RPC ``call``, FD passing, and signal queue (``DBusConnection``).
+* ``src/crystal-dbus-native/reply_router.cr``: Multiplexed fiber reply demultiplexer and match-rule signal dispatcher (``ReplyRouter``).
+* ``src/crystal-dbus-native/dbus_connection.cr``: UNIX domain socket connection, multiplexed RPC ``call``, signal subscription manager, and FD passing (``DBusConnection``).
+* ``src/crystal-dbus-native/proxies.cr``: Standard ``org.freedesktop.DBus.Properties`` and ``org.freedesktop.DBus.Introspectable`` client proxies (``PropertiesProxy`` and ``IntrospectableProxy``).
 
 Technical Specifications
 ------------------------
@@ -42,8 +44,8 @@ Technical Specifications
 * **[TECH-003] Out-of-Band SCM_RIGHTS Ancillary File Descriptor Transport** (Fulfills ``[FUNC-004]``):
   ``SecureFDPasser`` wraps ``LibC.sendmsg`` and ``LibC.recvmsg`` with ``SOL_SOCKET``/``SCM_RIGHTS`` control messages, enforcing a maximum of 253 file descriptors per message, passing ``MSG_CMSG_CLOEXEC`` to atomically set ``FD_CLOEXEC`` on received descriptors, and closing all extracted descriptors whenever ``MSG_CTRUNC`` or header/body parsing fails.
 
-* **[TECH-006] Standard Properties and Introspectable Client Proxy Architecture** (Fulfills ``[FUNC-006]`` — Target ``v0.4.0``):
+* **[TECH-006] Standard Properties and Introspectable Client Proxy Architecture** (Fulfills ``[FUNC-006]``):
   ``PropertiesProxy`` wraps ``DBusConnection`` for a target ``destination`` and ``ObjectPath``, marshaling ``org.freedesktop.DBus.Properties.Get`` (signature ``ss``, returning ``Variant``), ``Set`` (signature ``ssv``), and ``GetAll`` (signature ``s``, returning ``Hash(String, Variant)``), and decoding ``PropertiesChanged`` (signature ``sa{sv}as``). ``IntrospectableProxy`` wraps ``org.freedesktop.DBus.Introspectable.Introspect`` (returning XML ``String``).
 
-* **[TECH-007] Multiplexed Fiber Reply Router and Match-Rule Signal Dispatcher** (Fulfills ``[FUNC-007]`` — Target ``v0.4.0``):
-  A dedicated reader fiber demultiplexes inbound ``DBusMessage`` frames from ``DBusConnection``. ``METHOD_RETURN`` and ``ERROR`` frames are routed by ``reply_serial`` to per-call buffered ``Channel(DBusMessage).new(1)`` instances stored in a mutex-guarded ``Hash(UInt32, Channel(DBusMessage))``, eliminating head-of-line blocking across concurrent calling fibers. ``DBusConnection#call`` removes ``serial`` from ``Hash(UInt32, Channel(DBusMessage))`` under ``@mutex`` inside an ``ensure`` block on return, timeout, cancellation, or connection close so the reader fiber never blocks or leaks channels. Inbound ``SIGNAL`` frames are matched against registered filter predicates managed via ``org.freedesktop.DBus.AddMatch`` and ``RemoveMatch`` and delivered to bounded ``Channel(DBusMessage).new(64)`` subscriber channels.
+* **[TECH-007] Multiplexed Fiber Reply Router and Match-Rule Signal Dispatcher** (Fulfills ``[FUNC-007]``):
+  A dedicated reader fiber demultiplexes inbound ``DBusMessage`` frames from ``DBusConnection`` via ``ReplyRouter``. ``METHOD_RETURN`` and ``ERROR`` frames are routed by ``reply_serial`` to per-call buffered ``Channel(DBusMessage).new(1)`` instances stored in a mutex-guarded ``Hash(UInt32, Channel(DBusMessage))``, eliminating head-of-line blocking across concurrent calling fibers. ``DBusConnection#call`` removes ``serial`` from ``Hash(UInt32, Channel(DBusMessage))`` under ``@mutex`` inside an ``ensure`` block on return, timeout, cancellation, or connection close so the reader fiber never blocks or leaks channels. Inbound ``SIGNAL`` frames are matched against registered filter predicates managed via ``org.freedesktop.DBus.AddMatch`` and ``RemoveMatch`` and delivered to bounded ``Channel(DBusMessage).new(64)`` subscriber channels.

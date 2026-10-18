@@ -2,7 +2,7 @@
 # and UNIX domain socket file descriptor passing (`SCM_RIGHTS`).
 module Crystal::Dbus::Native
   # Current semantic version of the `crystal-dbus-native` shard.
-  VERSION = "0.3.0"
+  VERSION = "0.3.1"
 end
 
 require "./crystal-dbus-native/errors"
@@ -13,4 +13,6 @@ require "./crystal-dbus-native/body_codec"
 require "./crystal-dbus-native/dbus_message"
 require "./crystal-dbus-native/sasl_authenticator"
 require "./crystal-dbus-native/secure_fd_passer"
+require "./crystal-dbus-native/reply_router"
 require "./crystal-dbus-native/dbus_connection"
+require "./crystal-dbus-native/proxies"

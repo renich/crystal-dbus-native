@@ -173,25 +173,26 @@ module Crystal::Dbus::Native
     private def self.decode_array(io : IO::Memory, elem_sig : String, fmt : IO::ByteFormat) : Value
       byte_len = io.read_bytes(UInt32, fmt)
       align_read(io, alignment_for(elem_sig))
-      end_pos = io.pos + byte_len.to_i
-      raise MessageError.new("Array byte length exceeds message body") if end_pos > io.size
+      end_pos = io.pos.to_u64 + byte_len.to_u64
+      raise ProtocolError.new("Array byte length exceeds message payload") if end_pos > io.size.to_u64
       return decode_dict(io, elem_sig, end_pos, fmt) if elem_sig.starts_with?('{')
       items = Array(Value).new
-      while io.pos < end_pos
+      while io.pos.to_u64 < end_pos
         items << decode_value(io, elem_sig, fmt)
       end
+      raise ProtocolError.new("Array element overrun beyond declared byte length") if io.pos.to_u64 != end_pos
       items.as(Value)
     end
 
-    private def self.decode_dict(io : IO::Memory, elem_sig : String, end_pos : Int32, fmt : IO::ByteFormat) : Value
-      key_sig = elem_sig[1, 1]
-      val_sig = elem_sig[2...-1]
+    private def self.decode_dict(io : IO::Memory, elem_sig : String, end_pos : UInt64, fmt : IO::ByteFormat) : Value
+      key_sig, val_sig = elem_sig[1, 1], elem_sig[2...-1]
       dict = Hash(Value, Value).new
-      while io.pos < end_pos
+      while io.pos.to_u64 < end_pos
         align_read(io, 8)
         k = decode_value(io, key_sig, fmt)
         dict[k] = decode_value(io, val_sig, fmt)
       end
+      raise ProtocolError.new("Array element overrun beyond declared byte length") if io.pos.to_u64 != end_pos
       dict.as(Value)
     end
 

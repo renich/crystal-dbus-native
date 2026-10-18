@@ -8,45 +8,37 @@ module Crystal::Dbus::Native
 
     # Authenticates `client` using the SASL `EXTERNAL` mechanism for `uid` and returns the server GUID.
     def self.authenticate(
-      client : UNIXSocket,
-      uid : UInt32,
-      timeout : Time::Span = 1.second,
-      negotiate_unix_fd : Bool = false,
+      client : UNIXSocket, uid : UInt32, timeout : Time::Span = 1.second, negotiate_unix_fd : Bool = false,
     ) : String
       old_timeout = client.read_timeout
       client.read_timeout = timeout
-
       begin
-        # D-Bus specification §3.4: Initial null byte
         client.write_byte(0_u8)
-
-        hex_uid = uid.to_s.to_slice.hexstring
-        client << "AUTH EXTERNAL #{hex_uid}\r\n"
+        client << "AUTH EXTERNAL #{uid.to_s.to_slice.hexstring}\r\n"
         client.flush
-
         response = read_response(client)
-
         unless response.starts_with?("OK ") || response == "OK"
           raise AuthError.new("Authentication failed: #{response}")
         end
-
         guid = response.size > 3 ? response[3..-1].strip : ""
-
-        if negotiate_unix_fd
-          client << "NEGOTIATE_UNIX_FD\r\n"
-          client.flush
-          fd_resp = read_response(client)
-          unless fd_resp.starts_with?("AGREE_UNIX_FD")
-            raise AuthError.new("Unix FD passing negotiation rejected: #{fd_resp}")
-          end
-        end
-
+        negotiate_unix_fd(client, negotiate_unix_fd)
         client << "BEGIN\r\n"
         client.flush
         guid
       ensure
         client.read_timeout = old_timeout
       end
+    end
+
+    private def self.negotiate_unix_fd(socket : UNIXSocket, negotiate_fd : Bool) : Bool
+      return false unless negotiate_fd
+      socket << "NEGOTIATE_UNIX_FD\r\n"
+      socket.flush
+      fd_resp = read_response(socket)
+      unless fd_resp.starts_with?("AGREE_UNIX_FD")
+        raise AuthError.new("Unix FD passing negotiation rejected: #{fd_resp}")
+      end
+      true
     end
 
     private def self.read_response(client : UNIXSocket) : String

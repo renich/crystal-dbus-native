@@ -3,16 +3,22 @@ require "socket"
 module Crystal::Dbus::Native
   # Byte-order encoding for D-Bus wire messages.
   enum Endianness : UInt8
-    Little = 0x6c_u8 # 'l'
-    Big    = 0x42_u8 # 'B'
+    # Little-endian byte order (`'l'`).
+    Little = 0x6c_u8
+    # Big-endian byte order (`'B'`).
+    Big = 0x42_u8
   end
 
   # D-Bus message types defined by the wire protocol specification.
   enum MessageType : UInt8
-    MethodCall   = 1_u8
+    # Method call request message (`METHOD_CALL`).
+    MethodCall = 1_u8
+    # Method return reply message (`METHOD_RETURN`).
     MethodReturn = 2_u8
-    Error        = 3_u8
-    Signal       = 4_u8
+    # Error reply message (`ERROR`).
+    Error = 3_u8
+    # Broadcast or unicast signal emission (`SIGNAL`).
+    Signal = 4_u8
   end
 
   # Represents a framed D-Bus wire protocol message with header fields and payload body.

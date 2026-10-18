@@ -11,6 +11,9 @@ module Crystal::Dbus::Native
   # Raised when a D-Bus wire message is malformed or violates protocol constraints.
   class MessageError < DBusError; end
 
+  # Alias for `MessageError` representing D-Bus wire protocol framing or marshaling violations.
+  alias ProtocolError = MessageError
+
   # Raised when the underlying transport socket closes unexpectedly.
   class ConnectionClosedError < DBusError; end
 end

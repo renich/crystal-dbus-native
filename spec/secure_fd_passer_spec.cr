@@ -1,6 +1,7 @@
 require "./spec_helper"
 require "socket"
 
+# Verifies [FUNC-004] / [TECH-003], [TECH-005]
 describe Crystal::Dbus::Native::SecureFDPasser do
   it "sends and receives FDs over a UNIX socket pair" do
     client, peer = UNIXSocket.pair(Socket::Type::STREAM)

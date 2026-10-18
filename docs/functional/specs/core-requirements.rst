@@ -21,10 +21,10 @@ Functional Requirements
   The shard must provide thread-safe non-zero 32-bit serial allocation, synchronous request-reply method invocation via ``DBusConnection#call``, automatic error conversion on ``MessageType::ERROR``, interleaved ``Signal`` buffering accessible via ``DBusConnection#poll_signal``, and ``DBusConnection#send``/``DBusConnection#receive_with_fds`` operations synchronized by ``Sync::Mutex``.
 
 * **[FUNC-006] Typed org.freedesktop.DBus.Properties and Introspectable Client Proxies**:
-  In Phase 2 ``v0.4.0``, the shard will provide high-level client proxies for ``org.freedesktop.DBus.Properties`` supporting typed ``Get``, ``Set``, and ``GetAll`` method calls plus ``PropertiesChanged`` signal decoding, alongside an ``org.freedesktop.DBus.Introspectable`` client proxy wrapping ``Introspect`` XML retrieval.
+  The shard must provide high-level client proxies for ``org.freedesktop.DBus.Properties`` (``PropertiesProxy``) supporting typed ``Get``, ``Set``, and ``GetAll`` method calls plus ``PropertiesChanged`` signal decoding, alongside an ``org.freedesktop.DBus.Introspectable`` client proxy (``IntrospectableProxy``) wrapping ``Introspect`` XML retrieval.
 
 * **[FUNC-007] Asynchronous Match-Rule Signal Subscriptions and Multiplexed Fiber Reply Router**:
-  In Phase 2 ``v0.4.0``, the shard will provide a background reader fiber and ``Hash(UInt32, Channel(DBusMessage))`` pending reply demultiplexer so multiple Crystal fibers execute ``DBusConnection#call`` concurrently without head-of-line blocking, paired with ``org.freedesktop.DBus.AddMatch`` and ``RemoveMatch`` channel-based signal subscriptions. Per-call reply channels must use buffered ``Channel(DBusMessage).new(1)``, signal subscription channels must use bounded ``Channel(DBusMessage).new(64)``, and ``DBusConnection#call`` must remove ``serial`` from ``Hash(UInt32, Channel(DBusMessage))`` under ``@mutex`` inside an ``ensure`` block on return, timeout, cancellation, or connection close so the reader fiber never blocks or leaks channels.
+  The shard must provide a background reader fiber and ``ReplyRouter`` ``Hash(UInt32, Channel(DBusMessage))`` pending reply demultiplexer so multiple Crystal fibers execute ``DBusConnection#call`` concurrently without head-of-line blocking, paired with ``org.freedesktop.DBus.AddMatch`` and ``RemoveMatch`` channel-based signal subscriptions. Per-call reply channels must use buffered ``Channel(DBusMessage).new(1)``, signal subscription channels must use bounded ``Channel(DBusMessage).new(64)``, and ``DBusConnection#call`` must remove ``serial`` from ``Hash(UInt32, Channel(DBusMessage))`` under ``@mutex`` inside an ``ensure`` block on return, timeout, cancellation, or connection close so the reader fiber never blocks or leaks channels.
 
 Traceability Matrix
 -------------------
@@ -58,10 +58,10 @@ Traceability Matrix
      - ``[TECH-001]``, ``[TECH-004]``, ``[TECH-005]`` (:doc:`../../technical/specs/architecture-overview`, :doc:`../../technical/specs/coding-standards`, :doc:`../../technical/specs/release-procedure`)
      - ``TASK-105`` (:doc:`../../project/roadmaps/phase-1-mvp`)
    * - ``[FUNC-006]``
-     - ``v0.4.0``
+     - ``v0.3.1``
      - ``[TECH-004]``, ``[TECH-006]`` (:doc:`../../technical/specs/architecture-overview`, :doc:`../../technical/specs/coding-standards`)
      - ``TASK-203``, ``TASK-204`` (:doc:`../../project/roadmaps/phase-2-enhancement`)
    * - ``[FUNC-007]``
-     - ``v0.4.0``
+     - ``v0.3.1``
      - ``[TECH-005]``, ``[TECH-007]`` (:doc:`../../technical/specs/architecture-overview`, :doc:`../../technical/specs/threat-model`)
      - ``TASK-201``, ``TASK-202`` (:doc:`../../project/roadmaps/phase-2-enhancement`)

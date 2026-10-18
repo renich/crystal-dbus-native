@@ -5,7 +5,7 @@ Phase 2: Enhancement
 Timeline & Objectives
 ---------------------
 
-Extend ``crystal-dbus-native`` in ``v0.4.0`` with a multiplexed fiber reply router eliminating head-of-line blocking across concurrent callers, channel-based ``AddMatch``/``RemoveMatch`` signal subscriptions, and typed client proxies for ``org.freedesktop.DBus.Properties`` and ``org.freedesktop.DBus.Introspectable``.
+Deliver ``crystal-dbus-native`` ``v0.3.1`` with a multiplexed fiber reply router eliminating head-of-line blocking across concurrent callers, channel-based ``AddMatch``/``RemoveMatch`` signal subscriptions, and typed client proxies for ``org.freedesktop.DBus.Properties`` and ``org.freedesktop.DBus.Introspectable``.
 
 Phase 2 Dependency Graph
 ------------------------
@@ -19,7 +19,7 @@ Milestone 2.1: Multiplexed Fiber Router and Signal Subscriptions
 
 * **TASK-201: Multiplexed Fiber Reply Router and Pending Serial Map**:
 
-  - **Status**: Planned (``v0.4.0``)
+  - **Status**: Completed (``v0.3.1``)
   - **Fulfills**: ``[FUNC-007]``, ``[TECH-005]``, ``[TECH-007]``
   - **Blocked By**: ``TASK-105``
   - **Unblocks**: ``TASK-202``, ``TASK-203``, ``TASK-204``
@@ -27,7 +27,7 @@ Milestone 2.1: Multiplexed Fiber Router and Signal Subscriptions
 
 * **TASK-202: Match-Rule Signal Subscription Manager**:
 
-  - **Status**: Planned (``v0.4.0``)
+  - **Status**: Completed (``v0.3.1``)
   - **Fulfills**: ``[FUNC-007]``, ``[TECH-005]``, ``[TECH-007]``
   - **Blocked By**: ``TASK-201``
   - **Unblocks**: ``TASK-203``
@@ -38,7 +38,7 @@ Milestone 2.2: Standard Interface Client Proxies
 
 * **TASK-203: org.freedesktop.DBus.Properties Proxy and PropertiesChanged Signal Helper**:
 
-  - **Status**: Planned (``v0.4.0``)
+  - **Status**: Completed (``v0.3.1``)
   - **Fulfills**: ``[FUNC-006]``, ``[TECH-006]``
   - **Blocked By**: ``TASK-201``, ``TASK-202``
   - **Unblocks**: ``TASK-204``
@@ -46,7 +46,7 @@ Milestone 2.2: Standard Interface Client Proxies
 
 * **TASK-204: org.freedesktop.DBus.Introspectable Proxy and Full Phase 2 QA Verification**:
 
-  - **Status**: Planned (``v0.4.0``)
+  - **Status**: Completed (``v0.3.1``)
   - **Fulfills**: ``[FUNC-006]``, ``[TECH-004]``, ``[TECH-006]``
   - **Blocked By**: ``TASK-201``, ``TASK-203``
   - **Unblocks**: None

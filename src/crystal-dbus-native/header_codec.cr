@@ -186,7 +186,10 @@ module Crystal::Dbus::Native
 
     private def self.align_read(io : IO::Memory, alignment : Int32) : Nil
       pad = (alignment - (io.pos % alignment)) % alignment
-      pad.times { io.read_byte }
+      pad.times do
+        byte = io.read_byte || raise IO::EOFError.new
+        raise ProtocolError.new("Non-zero header alignment padding") if byte != 0_u8
+      end
     end
 
     # Writes zero padding bytes to `io` until `io.pos` is a multiple of `alignment`.

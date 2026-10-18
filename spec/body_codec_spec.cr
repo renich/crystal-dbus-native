@@ -1,5 +1,6 @@
 require "./spec_helper"
 
+# Verifies [FUNC-003] / [TECH-002]
 describe Crystal::Dbus::Native::BodyCodec do
   it "round-trips all basic D-Bus primitive types in LittleEndian" do
     sig = "ybnqiuxtdsohg"
@@ -105,6 +106,40 @@ describe Crystal::Dbus::Native::BodyCodec do
         "o",
         [Crystal::Dbus::Native::ObjectPath.new("relative/path").as(Crystal::Dbus::Native::Value)]
       )
+    end
+  end
+
+  it "raises ProtocolError instead of OverflowError when array byte_len is 0x80000000" do
+    io = IO::Memory.new
+    IO::ByteFormat::LittleEndian.encode(0x80000000_u32, io)
+    expect_raises(Crystal::Dbus::Native::ProtocolError, "Array byte length exceeds message payload") do
+      Crystal::Dbus::Native::BodyCodec.decode("au", io.to_slice)
+    end
+  end
+
+  it "raises ProtocolError when an interior array or dict element overruns declared byte_len" do
+    io = IO::Memory.new
+    # Array declares byte_len = 4, but interior string is 8 bytes ("overruns" + NUL) followed by trailing u32
+    IO::ByteFormat::LittleEndian.encode(4_u32, io)
+    IO::ByteFormat::LittleEndian.encode(8_u32, io)
+    io.write("overruns".to_slice)
+    io.write_byte(0_u8)
+    IO::ByteFormat::LittleEndian.encode(0_u32, io)
+
+    expect_raises(Crystal::Dbus::Native::ProtocolError, "Array element overrun beyond declared byte length") do
+      Crystal::Dbus::Native::BodyCodec.decode("asu", io.to_slice)
+    end
+
+    dict_io = IO::Memory.new
+    # Dict a{uu} declares byte_len = 4 (at offset 8 after 8-byte alignment), but entry is 8 bytes
+    IO::ByteFormat::LittleEndian.encode(4_u32, dict_io)
+    IO::ByteFormat::LittleEndian.encode(0_u32, dict_io)
+    IO::ByteFormat::LittleEndian.encode(1_u32, dict_io)
+    IO::ByteFormat::LittleEndian.encode(2_u32, dict_io)
+    IO::ByteFormat::LittleEndian.encode(99_u32, dict_io)
+
+    expect_raises(Crystal::Dbus::Native::ProtocolError, "Array element overrun beyond declared byte length") do
+      Crystal::Dbus::Native::BodyCodec.decode("a{uu}u", dict_io.to_slice)
     end
   end
 end

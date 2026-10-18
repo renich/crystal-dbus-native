@@ -40,30 +40,19 @@ module Crystal::Dbus::Native
     end
 
     private def self.validate_single_type(
-      sig : Bytes,
-      pos : Int32,
-      array_depth : Int32,
-      struct_depth : Int32,
-      in_array : Bool,
+      sig : Bytes, pos : Int32, array_depth : Int32, struct_depth : Int32, in_array : Bool,
     ) : Int32
       raise SignatureError.new("Unexpected end of signature") if pos >= sig.size
-
       if array_depth > MAX_DEPTH || struct_depth > MAX_DEPTH
         raise SignatureError.new("Depth exceeded: array=#{array_depth}, struct=#{struct_depth} > #{MAX_DEPTH}")
       end
 
-      char = sig[pos].chr
-      case char
-      when .in?(BASIC_TYPES), 'v'
-        pos + 1
-      when 'a'
-        validate_single_type(sig, pos + 1, array_depth + 1, struct_depth, true)
-      when '('
-        validate_struct(sig, pos + 1, array_depth, struct_depth)
-      when '{'
-        validate_dict_entry(sig, pos + 1, array_depth, struct_depth, in_array)
-      else
-        raise SignatureError.new("Invalid type code: #{char}")
+      case char = sig[pos].chr
+      when .in?(BASIC_TYPES), 'v' then pos + 1
+      when 'a'                    then validate_single_type(sig, pos + 1, array_depth + 1, struct_depth, true)
+      when '('                    then validate_struct(sig, pos + 1, array_depth, struct_depth)
+      when '{'                    then validate_dict_entry(sig, pos + 1, array_depth, struct_depth, in_array)
+      else                             raise SignatureError.new("Invalid type code: #{char}")
       end
     end
 

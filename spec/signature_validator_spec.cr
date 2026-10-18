@@ -1,5 +1,6 @@
 require "./spec_helper"
 
+# Verifies [FUNC-002] / [TECH-002], [TECH-005]
 describe Crystal::Dbus::Native::SignatureValidator do
   describe ".validate" do
     it "validates basic types and variant" do

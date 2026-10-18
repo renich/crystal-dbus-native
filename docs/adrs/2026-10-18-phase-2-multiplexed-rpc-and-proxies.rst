@@ -15,10 +15,10 @@ Decision
 --------
 
 #. **Typed Standard Interface Proxies** (Fulfills ``[FUNC-006]``/``[TECH-006]``):
-   Introduce ``PropertiesProxy`` (``Get``, ``Set``, ``GetAll``, and ``PropertiesChanged`` decoding) and ``IntrospectableProxy`` (``Introspect``) in Phase 2 (``v0.4.0``) on top of ``DBusConnection`` and ``BodyCodec`` without adding external dependencies.
+   Introduce ``PropertiesProxy`` (``Get``, ``Set``, ``GetAll``, and ``PropertiesChanged`` decoding) and ``IntrospectableProxy`` (``Introspect``) in Phase 2 (``v0.3.1``) on top of ``DBusConnection`` and ``BodyCodec`` without adding external dependencies.
 
 #. **Multiplexed Fiber Reply Router & Match-Rule Subscriptions** (Fulfills ``[FUNC-007]``/``[TECH-007]``):
-   Introduce a background reader fiber in Phase 2 (``v0.4.0``) that demultiplexes inbound ``METHOD_RETURN`` and ``ERROR`` frames by ``reply_serial`` into per-call buffered ``Channel(DBusMessage).new(1)`` channels stored in a mutex-protected ``Hash(UInt32, Channel(DBusMessage))`` map, and dispatches ``SIGNAL`` frames to bounded ``Channel(DBusMessage).new(64)`` subscriber channels registered via ``org.freedesktop.DBus.AddMatch`` and ``RemoveMatch``. ``DBusConnection#call`` removes ``serial`` from ``Hash(UInt32, Channel(DBusMessage))`` under ``@mutex`` inside an ``ensure`` block on return, timeout, cancellation, or connection close so the reader fiber never blocks or leaks channels.
+   Introduce a background reader fiber in Phase 2 (``v0.3.1``) that demultiplexes inbound ``METHOD_RETURN`` and ``ERROR`` frames by ``reply_serial`` into per-call buffered ``Channel(DBusMessage).new(1)`` channels stored in a mutex-protected ``Hash(UInt32, Channel(DBusMessage))`` map, and dispatches ``SIGNAL`` frames to bounded ``Channel(DBusMessage).new(64)`` subscriber channels registered via ``org.freedesktop.DBus.AddMatch`` and ``RemoveMatch``. ``DBusConnection#call`` removes ``serial`` from ``Hash(UInt32, Channel(DBusMessage))`` under ``@mutex`` inside an ``ensure`` block on return, timeout, cancellation, or connection close so the reader fiber never blocks or leaks channels.
 
 Consequences
 ------------

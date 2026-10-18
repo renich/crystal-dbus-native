@@ -15,32 +15,23 @@ module Crystal::Dbus::Native
 
     # Sends `data` bytes and an array of open file descriptors `fds` over `socket` using `SCM_RIGHTS`.
     def self.send_fds(socket : UNIXSocket, data : Bytes, fds : Array(Int32)) : Nil
-      if fds.size > MAX_FDS
-        raise DBusError.new("Too many FDs: maximum is #{MAX_FDS}, got #{fds.size}")
-      end
-
+      raise DBusError.new("Too many FDs: maximum is #{MAX_FDS}, got #{fds.size}") if fds.size > MAX_FDS
       if fds.empty?
         socket.write(data)
         socket.flush
         return
       end
 
-      iov = LibC::Iovec.new
-      iov.iov_base = data.to_unsafe.as(Void*)
-      iov.iov_len = data.size
-
+      iov = LibC::Iovec.new(iov_base: data.to_unsafe.as(Void*), iov_len: data.size)
       fd_byte_size = fds.size * sizeof(Int32)
       control_buf = Bytes.new(cmsg_space(fd_byte_size))
       msg = build_msghdr(pointerof(iov), control_buf)
-
       cmsg = control_buf.to_unsafe.as(LibC::Cmsghdr*)
       cmsg.value.cmsg_len = cmsg_len(fd_byte_size).to_u64
       cmsg.value.cmsg_level = SOL_SOCKET
       cmsg.value.cmsg_type = SCM_RIGHTS
-
       fd_ptr = (control_buf.to_unsafe.as(UInt8*) + cmsg_align(SIZEOF_CMSGHDR)).as(Int32*)
       fds.each_with_index { |file_desc, i| fd_ptr[i] = file_desc }
-
       perform_sendmsg(socket, pointerof(msg))
     end
 

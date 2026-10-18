@@ -12,7 +12,7 @@ Add ``crystal-dbus-native`` to your project's ``shard.yml``:
    dependencies:
      crystal-dbus-native:
        gitlab: renich/crystal-dbus-native
-       version: ~> 0.3.0
+       version: ~> 0.3.1
 
 Install dependencies:
 
@@ -23,7 +23,7 @@ Install dependencies:
 Basic Usage
 -----------
 
-Connect to the system or session bus, invoke methods with typed arguments, and decode replies:
+Connect to the system or session bus, invoke methods with typed arguments, use ``PropertiesProxy`` and ``IntrospectableProxy``, and subscribe to match-rule signals:
 
 .. code-block:: crystal
 
@@ -41,6 +41,13 @@ Connect to the system or session bus, invoke methods with typed arguments, and d
      values: ["org.freedesktop.DBus".as(Crystal::Dbus::Native::Value)]
    )
    puts reply.decode_body.first
+
+   introspect = Crystal::Dbus::Native::IntrospectableProxy.new(
+     conn,
+     "org.freedesktop.DBus",
+     "/org/freedesktop/DBus"
+   )
+   puts introspect.introspect
 
    conn.close
 

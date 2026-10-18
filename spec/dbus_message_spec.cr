@@ -1,6 +1,7 @@
 require "./spec_helper"
 require "socket"
 
+# Verifies [FUNC-003] / [TECH-002], [TECH-005]
 private def send_raw_header(
   server : UNIXSocket,
   endian : UInt8,
@@ -165,6 +166,20 @@ describe Crystal::Dbus::Native::DBusMessage do
         Crystal::Dbus::Native::DBusMessage.parse(client2)
       end
       client2.close
+    end
+
+    it "raises ProtocolError on non-zero alignment padding between header fields" do
+      msg = Crystal::Dbus::Native::DBusMessage.new(
+        Crystal::Dbus::Native::Endianness::Little,
+        Crystal::Dbus::Native::MessageType::MethodCall,
+        1_u32
+      )
+      # First field: SIGNATURE = "s" (code=8, sig_len=1, 'g', 0, len=1, 's', 0 -> 7 bytes)
+      # Followed by 1 byte of 8-byte alignment padding before second field, set to non-zero 0xff
+      raw_fields = Bytes[8_u8, 1_u8, 'g'.ord.to_u8, 0_u8, 1_u8, 's'.ord.to_u8, 0_u8, 0xff_u8, 5_u8]
+      expect_raises(Crystal::Dbus::Native::ProtocolError, "Non-zero header alignment padding") do
+        Crystal::Dbus::Native::HeaderCodec.parse_fields(msg, raw_fields, IO::ByteFormat::LittleEndian)
+      end
     end
   end
 end

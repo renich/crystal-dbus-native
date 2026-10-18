@@ -4,7 +4,7 @@
 project = 'crystal-dbus-native'
 copyright = '2026, Rénich Bon Ćirić (Copyleft)'
 author = 'Rénich Bon Ćirić'
-release = '0.3.0'
+release = '0.3.1'
 
 extensions = [
     'sphinx.ext.autodoc',

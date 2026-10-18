@@ -1,6 +1,7 @@
 require "./spec_helper"
 require "socket"
 
+# Verifies [FUNC-001], [FUNC-004], [FUNC-005] / [TECH-001], [TECH-003], [TECH-005]
 describe Crystal::Dbus::Native::DBusConnection do
   it "starts and performs SASL and Hello handshake" do
     client, server = UNIXSocket.pair(Socket::Type::STREAM)

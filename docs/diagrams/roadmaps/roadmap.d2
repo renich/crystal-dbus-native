@@ -11,16 +11,6 @@ classes: {
       bold: true
     }
   }
-  planned_phase: {
-    shape: step
-    style: {
-      fill: "#eff6ff"
-      stroke: "#2563eb"
-      stroke-width: 2
-      font-color: "#1e40af"
-      bold: true
-    }
-  }
   milestone_box: {
     shape: rectangle
     style: {
@@ -44,8 +34,8 @@ phase1: "Phase 1: Core Wire Protocol MVP\n(v0.1.0 - v0.3.0 | Completed)" {
   m1_1 -> m1_2: "Unblocks"
 }
 
-phase2: "Phase 2: Multiplexed RPC & High-Level Proxies\n(v0.4.0 | Planned)" {
-  class: planned_phase
+phase2: "Phase 2: Multiplexed RPC & High-Level Proxies\n(v0.3.1 | Completed)" {
+  class: completed_phase
   m2_1: "Milestone 2.1: Multiplexed Fiber Router & Signal Subscriptions\n[FUNC-007 | TECH-005, TECH-007]" {
     class: milestone_box
   }

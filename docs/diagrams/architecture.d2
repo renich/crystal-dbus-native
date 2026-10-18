@@ -28,7 +28,6 @@ classes: {
       fill: "#eff6ff"
       stroke: "#2563eb"
       stroke-width: 2
-      stroke-dash: 3
       border-radius: 6
       font-color: "#1e40af"
       bold: true
@@ -50,7 +49,7 @@ classes: {
 namespace: "Crystal::Dbus::Native" {
   class: container
 
-  proxies: "Phase 2 High-Level Client Proxies [v0.4.0]" {
+  proxies: "High-Level Client Proxies [v0.3.1]" {
     class: container
     properties_proxy: "PropertiesProxy\n(Get/Set/GetAll/PropertiesChanged)" {
       class: v2_module
@@ -65,7 +64,7 @@ namespace: "Crystal::Dbus::Native" {
     conn: "DBusConnection\n(open_session/open_system/call/send)" {
       class: v1_module
     }
-    router: "Multiplexed Fiber Reply Router\n(Hash(UInt32, Channel(DBusMessage))\n& AddMatch Signal Dispatcher) [v0.4.0]" {
+    router: "ReplyRouter\n(Hash(UInt32, Channel(DBusMessage))\n& AddMatch Signal Dispatcher) [v0.3.1]" {
       class: v2_module
     }
     sasl: "SASLAuthenticator\n(EXTERNAL & NEGOTIATE_UNIX_FD)" {
