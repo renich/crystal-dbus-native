@@ -13,15 +13,25 @@ module Crystal::Dbus::Native
     # Returns the underlying `UNIXSocket` transport.
     getter socket : UNIXSocket
 
+    # Returns `true` if `NEGOTIATE_UNIX_FD` succeeded during the SASL handshake.
+    getter? unix_fd_negotiated : Bool
+
     @serial_mutex : Sync::Mutex
+    @io_mutex : Sync::Mutex
     @next_serial : UInt32
+    @signal_queue : Deque(DBusMessage)
 
     # Initializes a new `DBusConnection` wrapping an open `UNIXSocket`.
     def initialize(@socket : UNIXSocket) : Nil
+      @socket.sync = true
+      @socket.read_buffering = false
       @serial_mutex = Sync::Mutex.new
+      @io_mutex = Sync::Mutex.new
       @next_serial = 1_u32
       @unique_name = nil
       @server_guid = nil
+      @unix_fd_negotiated = false
+      @signal_queue = Deque(DBusMessage).new
     end
 
     # Opens a connection to the user's session D-Bus socket.
@@ -47,6 +57,7 @@ module Crystal::Dbus::Native
     ) : String
       if authenticate
         @server_guid = SASLAuthenticator.authenticate(@socket, uid, negotiate_unix_fd: negotiate_unix_fd)
+        @unix_fd_negotiated = negotiate_unix_fd
       end
 
       if hello
@@ -64,15 +75,68 @@ module Crystal::Dbus::Native
       @unique_name || @server_guid || ""
     end
 
-    # Serializes and flushes a `DBusMessage` to the underlying socket.
-    def send(msg : DBusMessage) : Nil
-      msg.serialize(@socket)
-      @socket.flush
+    # Serializes and sends `msg` over the socket, optionally passing `fds` via `SCM_RIGHTS`.
+    def send(msg : DBusMessage, fds : Array(Int32) = Array(Int32).new) : Nil
+      if fds.empty?
+        msg.serialize(@socket)
+        @socket.flush
+        return
+      end
+
+      raise DBusError.new("UNIX FD passing was not negotiated on this connection") unless @unix_fd_negotiated
+      msg.unix_fds = fds.size.to_u32
+      SecureFDPasser.send_fds(@socket, msg.to_slice, fds)
     end
 
     # Reads and parses the next `DBusMessage` from the underlying socket.
     def receive : DBusMessage
       DBusMessage.parse(@socket)
+    end
+
+    # Reads and parses the next `DBusMessage` along with any ancillary file descriptors passed via `SCM_RIGHTS`.
+    def receive_with_fds(max_size : UInt32 = 134_217_728_u32) : Tuple(DBusMessage, Array(Int32))
+      header_buf = uninitialized StaticArray(UInt8, 16)
+      header = header_buf.to_slice
+      bytes_read, fds = SecureFDPasser.recv_fds(@socket, header)
+      if bytes_read == 0
+        fds.each { |descriptor| LibC.close(descriptor) }
+        raise ConnectionClosedError.new("Connection closed reading fixed message header")
+      end
+
+      begin
+        @socket.read_fully(header[bytes_read..]) if bytes_read < 16
+        {DBusMessage.parse_from_header(header, @socket, max_size), fds}
+      rescue ex
+        fds.each { |descriptor| LibC.close(descriptor) }
+        raise ex
+      end
+    end
+
+    # Invokes a D-Bus method and awaits its matching reply while buffering any interleaved signals.
+    def call(
+      destination : String,
+      path : String,
+      interface : String,
+      member : String,
+      signature : String? = nil,
+      values : Array(Value) = Array(Value).new,
+    ) : DBusMessage
+      serial = next_serial
+      msg = DBusMessage.method_call(
+        serial: serial,
+        path: path,
+        interface: interface,
+        member: member,
+        destination: destination
+      )
+      msg.encode_body(signature, values) if signature
+      send(msg)
+      await_reply(serial)
+    end
+
+    # Pops and returns the next buffered signal message, or `nil` if the signal queue is empty.
+    def poll_signal : DBusMessage?
+      @io_mutex.synchronize { @signal_queue.shift? }
     end
 
     # Allocates the next non-zero monotonically increasing 32-bit message serial in a thread-safe manner.
@@ -93,6 +157,21 @@ module Crystal::Dbus::Native
     # Returns `true` if the underlying socket is closed.
     def closed? : Bool
       @socket.closed?
+    end
+
+    private def await_reply(serial : UInt32) : DBusMessage
+      loop do
+        msg = receive
+        if msg.message_type == MessageType::Signal
+          @io_mutex.synchronize { @signal_queue.push(msg) }
+          next
+        end
+        next unless msg.reply_serial == serial
+        if msg.message_type == MessageType::Error
+          raise DBusError.new("D-Bus call failed: #{msg.error_name || "unknown error"}")
+        end
+        return msg
+      end
     end
 
     private def extract_unique_name(reply : DBusMessage) : String

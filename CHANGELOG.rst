@@ -10,6 +10,23 @@ and this project adheres to `Semantic Versioning <https://semver.org/spec/v2.0.0
 [Unreleased]
 ============
 
+[0.3.0] - 2026-10-18
+====================
+
+.. rubric:: Added
+
+- Added ``Variant``, ``StructValue``, ``ObjectPath``, ``Signature``, ``UnixFD``, and ``Value`` union types in ``src/crystal-dbus-native/variant.cr``.
+- Added general-purpose D-Bus body marshaler and unmarshaler (``BodyCodec.encode`` and ``BodyCodec.decode``) with strict 1, 2, 4, and 8-byte alignment enforcement, including empty arrays of 8-byte elements (``a{sv}``, ``a(ii)``).
+- Added ``DBusMessage#encode_body``, ``DBusMessage#decode_body``, and ``DBusMessage.parse_from_header``.
+- Added ``DBusConnection#call`` RPC correlation with interleaved ``Signal`` buffering (``DBusConnection#poll_signal``), ``DBusConnection#send`` with ``fds``, and ``DBusConnection#receive_with_fds``.
+- Added ``SignatureValidator.split_types`` and ``SignatureValidator.validate_single``.
+- Added modular Sphinx documentation suite (``docs/business/``, ``docs/functional/``, ``docs/technical/``, ``docs/adrs/``, ``docs/project/``, and ``docs/user/``) along with ``LICENSE-DOCS``, ``CODE_OF_HONOR.rst``, and ``.crstlint.yaml``.
+
+.. rubric:: Changed
+
+- Extracted D-Bus header field array (``a(yv)``) parsing and serialization from ``DBusMessage`` into ``HeaderCodec`` so all source files remain under 220 lines and all methods under 25 lines.
+- Disabled user-space read buffering on ``DBusConnection`` sockets to preserve ``SCM_RIGHTS`` ancillary control messages across stream reads.
+
 [0.2.0] - 2026-10-18
 ====================
 

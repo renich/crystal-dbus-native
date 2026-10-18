@@ -1,19 +1,22 @@
-==============================================================
-Phase 2: Crucible Protocol Refactoring & Release Stabilization
-==============================================================
+======================
+Phase 2: Release 0.3.0
+======================
 
-:Status: Completed
-:Target Version: 0.1.1
+Timeline & Objectives
+---------------------
 
-Overview
-========
+Decompose header serialization into ``HeaderCodec``, implement the general-purpose ``BodyCodec`` and ``Variant`` type system, add ``DBusConnection#call`` RPC correlation with signal buffering, and align the Sphinx documentation suite.
 
-Apply the Crucible Protocol Red-Team/Blue-Team refactoring loop to ensure robust error handling, memory safety, and zero lint warnings in native D-Bus operations.
+Milestones & Deliverables
+-------------------------
 
-Milestones and Deliverables
-===========================
+* **Milestone 2.1: Header & Body Codec Architecture** (Fulfills ``[FUNC-001]``, ``[FUNC-003]``):
 
-* **[DBUS-006] Eradicate Monkey-Patching**: Remove extension overrides on ``UNIXSocket`` and rely purely on standard library primitives and ``UNIXSocket.pair``.
-* **[DBUS-007] Robust FD Cleanup**: Guarantee all received file descriptors are closed via ``LibC.close`` if parsing fails or truncation occurs.
-* **[DBUS-008] Signature Validator Refactoring**: Decompose complex recursive parsing into isolated, testable helper methods.
-* **[DBUS-009] Documentation and Release**: Update ``CHANGELOG.rst`` with ``.. rubric::``, apply AGPL-3.0-or-later licensing, and publish API docs to ``docs/technical/api``.
+  - [x] Extract ``HeaderCodec`` from ``DBusMessage`` so every module remains under 220 lines.
+  - [x] Implement ``Variant``, ``StructValue``, ``ObjectPath``, ``Signature``, ``UnixFD``, and ``BodyCodec``.
+  - [x] Enforce 1, 2, 4, and 8-byte alignment rules including empty arrays of 8-byte elements (``a{sv}``, ``a(ii)``).
+
+* **Milestone 2.2: RPC Correlation, FD Transport, & Docs** (Fulfills ``[FUNC-005]``, ``[FUNC-006]``):
+
+  - [x] Add ``DBusConnection#call``, ``poll_signal``, ``send`` with FDs, and ``receive_with_fds``.
+  - [x] Achieve 100% pass rate across ``crystal spec``, Ameba, Flaw, ``crstlint``, ``rstcheck``, and Sphinx ``dirhtml``.

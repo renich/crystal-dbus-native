@@ -5,6 +5,8 @@ Globs:
 Excluded:
   - lib
   - bin
+  - docs/build
+  - docs/technical/api
 
 Layout/LineLength:
   Enabled: true

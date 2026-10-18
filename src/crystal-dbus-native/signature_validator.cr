@@ -12,15 +12,31 @@ module Crystal::Dbus::Native
 
     # Validates `signature` or raises `SignatureError` if malformed or out of bounds.
     def self.validate(signature : String) : Nil
+      split_types(signature)
+    end
+
+    # Validates that `signature` contains exactly one complete D-Bus type.
+    def self.validate_single(signature : String) : Nil
+      types = split_types(signature)
+      return if types.size == 1
+      raise SignatureError.new("Expected single complete type, got #{types.size} types in '#{signature}'")
+    end
+
+    # Validates `signature` and splits it into an array of single complete type signatures.
+    def self.split_types(signature : String) : Array(String)
       if signature.bytesize > MAX_LENGTH
         raise SignatureError.new("Signature too long: #{signature.bytesize} > #{MAX_LENGTH}")
       end
 
+      types = Array(String).new
       pos = 0
       bytes = signature.to_slice
       while pos < bytes.size
-        pos = validate_single_type(bytes, pos, 0, 0, false)
+        next_pos = validate_single_type(bytes, pos, 0, 0, false)
+        types << String.new(bytes[pos, next_pos - pos])
+        pos = next_pos
       end
+      types
     end
 
     private def self.validate_single_type(

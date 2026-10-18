@@ -1,6 +1,29 @@
 require "./spec_helper"
 require "socket"
 
+private def send_raw_header(
+  server : UNIXSocket,
+  endian : UInt8,
+  msg_type : UInt8,
+  version : UInt8,
+  body_len : UInt32,
+  serial : UInt32,
+  fields_slice : Bytes = Bytes.empty,
+) : Nil
+  header = IO::Memory.new
+  header.write_byte(endian)
+  header.write_byte(msg_type)
+  header.write_byte(0_u8)
+  header.write_byte(version)
+  header.write_bytes(body_len, IO::ByteFormat::LittleEndian)
+  header.write_bytes(serial, IO::ByteFormat::LittleEndian)
+  header.write_bytes(fields_slice.size.to_u32, IO::ByteFormat::LittleEndian)
+  header.write(fields_slice) unless fields_slice.empty?
+  server.write(header.to_slice)
+  server.flush
+  server.close
+end
+
 describe Crystal::Dbus::Native::DBusMessage do
   describe ".parse and #serialize" do
     it "round-trips a method call with header fields and body" do
@@ -72,20 +95,7 @@ describe Crystal::Dbus::Native::DBusMessage do
 
     it "raises exception on invalid endianness byte" do
       client, server = UNIXSocket.pair(Socket::Type::STREAM)
-      spawn do
-        header = IO::Memory.new
-        header.write_byte('z'.ord.to_u8)
-        header.write_byte(1_u8)
-        header.write_byte(0_u8)
-        header.write_byte(1_u8)
-        header.write_bytes(0_u32, IO::ByteFormat::LittleEndian)
-        header.write_bytes(1_u32, IO::ByteFormat::LittleEndian)
-        header.write_bytes(0_u32, IO::ByteFormat::LittleEndian)
-        server.write(header.to_slice)
-        server.flush
-        server.close
-      end
-
+      spawn { send_raw_header(server, 'z'.ord.to_u8, 1_u8, 1_u8, 0_u32, 1_u32) }
       expect_raises(Crystal::Dbus::Native::MessageError, "Invalid endianness byte") do
         Crystal::Dbus::Native::DBusMessage.parse(client)
       end
@@ -94,20 +104,7 @@ describe Crystal::Dbus::Native::DBusMessage do
 
     it "raises exception when message serial is zero" do
       client, server = UNIXSocket.pair(Socket::Type::STREAM)
-      spawn do
-        header = IO::Memory.new
-        header.write_byte('l'.ord.to_u8)
-        header.write_byte(1_u8)
-        header.write_byte(0_u8)
-        header.write_byte(1_u8)
-        header.write_bytes(0_u32, IO::ByteFormat::LittleEndian)
-        header.write_bytes(0_u32, IO::ByteFormat::LittleEndian)
-        header.write_bytes(0_u32, IO::ByteFormat::LittleEndian)
-        server.write(header.to_slice)
-        server.flush
-        server.close
-      end
-
+      spawn { send_raw_header(server, 'l'.ord.to_u8, 1_u8, 1_u8, 0_u32, 0_u32) }
       expect_raises(Crystal::Dbus::Native::MessageError, "Invalid message serial: 0") do
         Crystal::Dbus::Native::DBusMessage.parse(client)
       end
@@ -123,20 +120,7 @@ describe Crystal::Dbus::Native::DBusMessage do
         fields.write_byte('u'.ord.to_u8)
         fields.write_byte(0_u8)
         fields.write_bytes(1_u32, IO::ByteFormat::LittleEndian)
-        fields_slice = fields.to_slice
-
-        header = IO::Memory.new
-        header.write_byte('l'.ord.to_u8)
-        header.write_byte(1_u8)
-        header.write_byte(0_u8)
-        header.write_byte(1_u8)
-        header.write_bytes(0_u32, IO::ByteFormat::LittleEndian)
-        header.write_bytes(1_u32, IO::ByteFormat::LittleEndian)
-        header.write_bytes(fields_slice.size.to_u32, IO::ByteFormat::LittleEndian)
-        header.write(fields_slice)
-        server.write(header.to_slice)
-        server.flush
-        server.close
+        send_raw_header(server, 'l'.ord.to_u8, 1_u8, 1_u8, 0_u32, 1_u32, fields.to_slice)
       end
 
       expect_raises(Crystal::Dbus::Native::MessageError, "Unknown or invalid header field code") do
@@ -147,20 +131,7 @@ describe Crystal::Dbus::Native::DBusMessage do
 
     it "raises exception if total size exceeds max_size" do
       client, server = UNIXSocket.pair(Socket::Type::STREAM)
-      spawn do
-        header = IO::Memory.new
-        header.write_byte('l'.ord.to_u8)
-        header.write_byte(1_u8)
-        header.write_byte(0_u8)
-        header.write_byte(1_u8)
-        header.write_bytes(128_u32, IO::ByteFormat::LittleEndian)
-        header.write_bytes(42_u32, IO::ByteFormat::LittleEndian)
-        header.write_bytes(0_u32, IO::ByteFormat::LittleEndian)
-        server.write(header.to_slice)
-        server.flush
-        server.close
-      end
-
+      spawn { send_raw_header(server, 'l'.ord.to_u8, 1_u8, 1_u8, 128_u32, 42_u32) }
       expect_raises(Crystal::Dbus::Native::MessageError, "Message length exceeds maximum") do
         Crystal::Dbus::Native::DBusMessage.parse(client, 100_u32)
       end
@@ -180,48 +151,20 @@ describe Crystal::Dbus::Native::DBusMessage do
       client.close
     end
 
-    it "raises exception on unknown message type" do
-      client, server = UNIXSocket.pair(Socket::Type::STREAM)
-      spawn do
-        header = IO::Memory.new
-        header.write_byte('l'.ord.to_u8)
-        header.write_byte(99_u8)
-        header.write_byte(0_u8)
-        header.write_byte(1_u8)
-        header.write_bytes(0_u32, IO::ByteFormat::LittleEndian)
-        header.write_bytes(1_u32, IO::ByteFormat::LittleEndian)
-        header.write_bytes(0_u32, IO::ByteFormat::LittleEndian)
-        server.write(header.to_slice)
-        server.flush
-        server.close
-      end
-
+    it "raises exception on unknown message type or unsupported protocol version" do
+      client1, server1 = UNIXSocket.pair(Socket::Type::STREAM)
+      spawn { send_raw_header(server1, 'l'.ord.to_u8, 99_u8, 1_u8, 0_u32, 1_u32) }
       expect_raises(Crystal::Dbus::Native::MessageError, "Unknown message type") do
-        Crystal::Dbus::Native::DBusMessage.parse(client)
+        Crystal::Dbus::Native::DBusMessage.parse(client1)
       end
-      client.close
-    end
+      client1.close
 
-    it "raises exception on unsupported protocol version" do
-      client, server = UNIXSocket.pair(Socket::Type::STREAM)
-      spawn do
-        header = IO::Memory.new
-        header.write_byte('l'.ord.to_u8)
-        header.write_byte(1_u8)
-        header.write_byte(0_u8)
-        header.write_byte(2_u8)
-        header.write_bytes(0_u32, IO::ByteFormat::LittleEndian)
-        header.write_bytes(1_u32, IO::ByteFormat::LittleEndian)
-        header.write_bytes(0_u32, IO::ByteFormat::LittleEndian)
-        server.write(header.to_slice)
-        server.flush
-        server.close
-      end
-
+      client2, server2 = UNIXSocket.pair(Socket::Type::STREAM)
+      spawn { send_raw_header(server2, 'l'.ord.to_u8, 1_u8, 2_u8, 0_u32, 1_u32) }
       expect_raises(Crystal::Dbus::Native::MessageError, "Unsupported D-Bus protocol version") do
-        Crystal::Dbus::Native::DBusMessage.parse(client)
+        Crystal::Dbus::Native::DBusMessage.parse(client2)
       end
-      client.close
+      client2.close
     end
   end
 end
