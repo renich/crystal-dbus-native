@@ -18,22 +18,22 @@ Documentation Architecture
      - Entrypoint
    * - **Business & Strategy**
      - Strategic vision, ecosystem goals, and user personas.
-     - `Business Specifications <business/spec.rst>`__
+     - :doc:`Business Specifications <business/spec>`
    * - **Functional Specifications**
-     - Requirements [FUNC-001]..[FUNC-006], behavioral contracts, and interfaces.
-     - `Functional Specifications <functional/spec.rst>`__
+     - Requirements ``[FUNC-001]``..``[FUNC-007]``, behavioral contracts, and interfaces.
+     - :doc:`Functional Specifications <functional/spec>`
    * - **Technical Architecture**
-     - Wire framing, body marshaling, SCM_RIGHTS security, threat model, and release strategy.
-     - `Technical Architecture <technical/spec.rst>`__
+     - Wire framing, body marshaling, SCM_RIGHTS security, threat model, and release strategy ``[TECH-001]``..``[TECH-007]``.
+     - :doc:`Technical Architecture <technical/spec>`
    * - **Architecture Decisions**
      - Immutable Architecture Decision Records and trade-off analyses.
-     - `Architecture Decisions <adrs/index.rst>`__
+     - :doc:`Architecture Decisions <adrs/index>`
    * - **Project Roadmap**
      - Sequenced phase milestones, delivery tracking, and verification matrices.
-     - `Project Roadmap <project/roadmap.rst>`__
+     - :doc:`Project Roadmap <project/roadmap>`
    * - **User Guides**
      - Integration guides, code examples, and API tutorials.
-     - `User Manual <user/index.rst>`__
+     - :doc:`User Manual <user/index>`
    * - **Crystal API Reference**
      - Compiler-generated API documentation covering all classes, structs, and modules.
      - `Crystal API Reference <technical/api/index.html>`__

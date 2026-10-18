@@ -1,0 +1,58 @@
+direction: right
+
+classes: {
+  completed_phase: {
+    shape: step
+    style: {
+      fill: "#ecfdf5"
+      stroke: "#059669"
+      stroke-width: 2
+      font-color: "#065f46"
+      bold: true
+    }
+  }
+  planned_phase: {
+    shape: step
+    style: {
+      fill: "#eff6ff"
+      stroke: "#2563eb"
+      stroke-width: 2
+      font-color: "#1e40af"
+      bold: true
+    }
+  }
+  milestone_box: {
+    shape: rectangle
+    style: {
+      fill: "#f8fafc"
+      stroke: "#475569"
+      stroke-width: 2
+      border-radius: 6
+      font-color: "#0f172a"
+    }
+  }
+}
+
+phase1: "Phase 1: Core Wire Protocol MVP\n(v0.1.0 - v0.3.0 | Completed)" {
+  class: completed_phase
+  m1_1: "Milestone 1.1: Wire Framing, Auth & FD Passing\n[FUNC-001, FUNC-002, FUNC-004 | TECH-001..TECH-005]" {
+    class: milestone_box
+  }
+  m1_2: "Milestone 1.2: BodyCodec & Synchronous RPC\n[FUNC-003, FUNC-005 | TECH-001, TECH-002, TECH-004, TECH-005]" {
+    class: milestone_box
+  }
+  m1_1 -> m1_2: "Unblocks"
+}
+
+phase2: "Phase 2: Multiplexed RPC & High-Level Proxies\n(v0.4.0 | Planned)" {
+  class: planned_phase
+  m2_1: "Milestone 2.1: Multiplexed Fiber Router & Signal Subscriptions\n[FUNC-007 | TECH-005, TECH-007]" {
+    class: milestone_box
+  }
+  m2_2: "Milestone 2.2: Standard Interface Client Proxies\n[FUNC-006 | TECH-004, TECH-006]" {
+    class: milestone_box
+  }
+  m2_1 -> m2_2: "Unblocks"
+}
+
+phase1 -> phase2: "v0.3.0 Baseline Complete"

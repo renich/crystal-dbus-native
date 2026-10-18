@@ -14,7 +14,7 @@ Binding to ``libdbus-1`` introduces C library dependencies, thread-safety pitfal
 Decision
 --------
 
-#. **Zero Third-Party Runtime Dependencies**: Implement D-Bus wire framing (`DBusMessage`, `HeaderCodec`), body marshaling (`BodyCodec`, `Variant`), SASL ``EXTERNAL`` authentication (`SASLAuthenticator`), and ``SCM_RIGHTS`` file descriptor passing (`SecureFDPasser`) purely against the Crystal standard library and POSIX socket syscalls.
+#. **Zero Third-Party Runtime Dependencies**: Implement D-Bus wire framing (``DBusMessage``, ``HeaderCodec``), body marshaling (``BodyCodec``, ``Variant``), SASL ``EXTERNAL`` authentication (``SASLAuthenticator``), and ``SCM_RIGHTS`` file descriptor passing (``SecureFDPasser``) purely against the Crystal standard library and POSIX socket syscalls.
 #. **Unbuffered Socket Framing**: Disable user-space read buffering on ``DBusConnection`` sockets so ``recvmsg`` with ``MSG_CMSG_CLOEXEC`` never loses ancillary ``SCM_RIGHTS`` control messages to read-ahead buffers.
 #. **Strict Static Analysis**: Enforce zero linter suppressions across Ameba, Flaw, ``crstlint``, and ``rstcheck``.
 

@@ -10,4 +10,4 @@ Interacting with Linux system and session D-Bus services in Crystal traditionall
 Solution
 --------
 
-``crystal-dbus-native`` provides a pure, zero-dependency Crystal implementation of the D-Bus wire protocol v1, SASL ``EXTERNAL`` authentication, ``NEGOTIATE_UNIX_FD`` negotiation, general-purpose body marshaling and unmarshaling, and ``SCM_RIGHTS`` ancillary file descriptor passing with atomic ``MSG_CMSG_CLOEXEC`` protection.
+``crystal-dbus-native`` provides a pure, zero-dependency Crystal implementation of the D-Bus wire protocol v1, SASL ``EXTERNAL`` authentication, ``NEGOTIATE_UNIX_FD`` negotiation, general-purpose body marshaling and unmarshaling, ``SCM_RIGHTS`` ancillary file descriptor passing with atomic ``MSG_CMSG_CLOEXEC`` protection, and a phased path to typed standard interface proxies and multiplexed concurrent fiber RPC.

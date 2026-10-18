@@ -5,7 +5,13 @@ Coding Standards
 Requirement Mapping
 -------------------
 
-Fulfills ``[FUNC-001]``, ``[FUNC-002]``, ``[FUNC-003]``, ``[FUNC-004]``, ``[FUNC-005]``, and ``[FUNC-006]``.
+Fulfills ``[FUNC-002]``, ``[FUNC-005]``, and ``[FUNC-006]``.
+
+Technical Specification
+-----------------------
+
+* **[TECH-004] Zero-Suppression Static Analysis, Modularity Bounds, and Concurrency Safety** (Fulfills ``[FUNC-002]``, ``[FUNC-005]``, ``[FUNC-006]``):
+  All source and specification files must satisfy the strict engineering constraints enumerated below.
 
 Core Directives
 ---------------
@@ -18,6 +24,9 @@ Core Directives
 
 #. **Defensive Nil Handling & Explicit Types**:
    Never call ``.not_nil!``. All method parameters and return types must carry explicit type annotations, using type narrowing with ``if``, ``case``, or ``.try``.
+
+#. **Execution Contexts & Thread Safety**:
+   Synchronize shared mutable connection state using ``Sync::Mutex`` (``require "sync/mutex"``) compatible with Crystal 1.21+ multithreaded Execution Contexts.
 
 #. **Line Length**:
    Maximum line length is 120 characters (``Layout/LineLength: MaxLength: 120`` in ``.ameba.yml``).

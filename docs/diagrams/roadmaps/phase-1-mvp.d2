@@ -1,0 +1,54 @@
+direction: right
+
+classes: {
+  task_done: {
+    shape: rectangle
+    style: {
+      fill: "#ecfdf5"
+      stroke: "#059669"
+      stroke-width: 2
+      border-radius: 6
+      font-color: "#065f46"
+      bold: true
+    }
+  }
+  milestone: {
+    style: {
+      fill: "#f8fafc"
+      stroke: "#334155"
+      stroke-width: 2
+      border-radius: 8
+      font-color: "#0f172a"
+      bold: true
+    }
+  }
+}
+
+m1_1: "Milestone 1.1: Wire Framing, Auth & FD Passing" {
+  class: milestone
+  t101: "TASK-101: SASL EXTERNAL &\nNEGOTIATE_UNIX_FD\n[FUNC-001 | TECH-001, TECH-005]" {
+    class: task_done
+  }
+  t102: "TASK-102: SignatureValidator\nRecursive Bounds\n[FUNC-002 | TECH-002, TECH-004, TECH-005]" {
+    class: task_done
+  }
+  t103: "TASK-103: SecureFDPasser\nSCM_RIGHTS & CLOEXEC\n[FUNC-004 | TECH-003, TECH-005]" {
+    class: task_done
+  }
+}
+
+m1_2: "Milestone 1.2: Body Marshaling & Synchronous RPC" {
+  class: milestone
+  t104: "TASK-104: HeaderCodec, BodyCodec\n& DBusMessage\n[FUNC-003 | TECH-002, TECH-005]" {
+    class: task_done
+  }
+  t105: "TASK-105: DBusConnection#call\n& Signal Queueing\n[FUNC-005 | TECH-001, TECH-004, TECH-005]" {
+    class: task_done
+  }
+}
+
+m1_1.t101 -> m1_2.t105: "Unblocks"
+m1_1.t102 -> m1_2.t104: "Critical Path"
+m1_1.t103 -> m1_2.t104: "Critical Path"
+m1_1.t103 -> m1_2.t105: "Unblocks"
+m1_2.t104 -> m1_2.t105: "Critical Path"

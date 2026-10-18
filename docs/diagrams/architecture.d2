@@ -1,0 +1,119 @@
+direction: down
+
+classes: {
+  container: {
+    style: {
+      stroke: "#334155"
+      stroke-width: 2
+      border-radius: 8
+      fill: "#f8fafc"
+      font-color: "#0f172a"
+      bold: true
+    }
+  }
+  v1_module: {
+    shape: rectangle
+    style: {
+      fill: "#ecfdf5"
+      stroke: "#059669"
+      stroke-width: 2
+      border-radius: 6
+      font-color: "#065f46"
+      bold: true
+    }
+  }
+  v2_module: {
+    shape: rectangle
+    style: {
+      fill: "#eff6ff"
+      stroke: "#2563eb"
+      stroke-width: 2
+      stroke-dash: 3
+      border-radius: 6
+      font-color: "#1e40af"
+      bold: true
+    }
+  }
+  value_type: {
+    shape: rectangle
+    style: {
+      fill: "#fef3c7"
+      stroke: "#d97706"
+      stroke-width: 2
+      border-radius: 6
+      font-color: "#92400e"
+      bold: true
+    }
+  }
+}
+
+namespace: "Crystal::Dbus::Native" {
+  class: container
+
+  proxies: "Phase 2 High-Level Client Proxies [v0.4.0]" {
+    class: container
+    properties_proxy: "PropertiesProxy\n(Get/Set/GetAll/PropertiesChanged)" {
+      class: v2_module
+    }
+    introspect_proxy: "IntrospectableProxy\n(org.freedesktop.DBus.Introspectable)" {
+      class: v2_module
+    }
+  }
+
+  transport: "Transport & Connection Orchestration" {
+    class: container
+    conn: "DBusConnection\n(open_session/open_system/call/send)" {
+      class: v1_module
+    }
+    router: "Multiplexed Fiber Reply Router\n(Hash(UInt32, Channel(DBusMessage))\n& AddMatch Signal Dispatcher) [v0.4.0]" {
+      class: v2_module
+    }
+    sasl: "SASLAuthenticator\n(EXTERNAL & NEGOTIATE_UNIX_FD)" {
+      class: v1_module
+    }
+    fd_passer: "SecureFDPasser\n(sendmsg/recvmsg SCM_RIGHTS\nMSG_CMSG_CLOEXEC)" {
+      class: v1_module
+    }
+  }
+
+  framing: "Wire Protocol v1 Framing & Codecs" {
+    class: container
+    msg: "DBusMessage\n(16-Byte Header + Payload)" {
+      class: v1_module
+    }
+    header_codec: "HeaderCodec\n(a(yv) Header Fields)" {
+      class: v1_module
+    }
+    sig_validator: "SignatureValidator\n(255B Limit & 32-Depth Bounds)" {
+      class: v1_module
+    }
+    body_codec: "BodyCodec\n(Recursive 1/2/4/8B Alignment)" {
+      class: v1_module
+    }
+  }
+
+  types: "Value & Domain Error Hierarchy" {
+    class: container
+    variant: "Variant/StructValue\nObjectPath/Signature/UnixFD" {
+      class: value_type
+    }
+    errors: "DBusError Hierarchy\n(AuthError/SignatureError/\nMessageError/ConnectionClosedError)" {
+      class: value_type
+    }
+  }
+
+  proxies.properties_proxy -> transport.conn: "Typed Property RPC"
+  proxies.introspect_proxy -> transport.conn: "XML Introspection RPC"
+
+  transport.conn -> transport.router: "Concurrent Serial Demux & Match Rules"
+  transport.conn -> transport.sasl: "Handshake"
+  transport.conn -> transport.fd_passer: "Socket + Ancillary FDs"
+  transport.conn -> framing.msg: "Serialize/Parse"
+
+  framing.msg -> framing.header_codec: "Decode/Encode Header Fields"
+  framing.msg -> framing.body_codec: "Decode/Encode Body"
+  framing.header_codec -> framing.sig_validator: "Validate Header Signatures"
+  framing.body_codec -> framing.sig_validator: "Split & Validate Signatures"
+  framing.body_codec -> types.variant: "Marshal/Unmarshal Values"
+  framing.msg -> types.errors: "Raise on Malformed Frame"
+}

@@ -5,7 +5,13 @@ Threat Model
 Requirement Mapping
 -------------------
 
-Fulfills ``[FUNC-001]``, ``[FUNC-002]``, ``[FUNC-003]``, ``[FUNC-004]``, and ``[FUNC-005]``.
+Fulfills ``[FUNC-001]``, ``[FUNC-002]``, ``[FUNC-003]``, ``[FUNC-004]``, and ``[FUNC-007]``.
+
+Technical Specification
+-----------------------
+
+* **[TECH-005] Wire Bounds Checking, Descriptor Leak Prevention, and Concurrency Hardening** (Fulfills ``[FUNC-001]``, ``[FUNC-002]``, ``[FUNC-003]``, ``[FUNC-004]``, ``[FUNC-007]``):
+  The library enforces defensive wire bounds, atomic close-on-exec descriptor hygiene, and bounded channel/queue limits across every untrusted socket boundary.
 
 Security Controls Summary
 -------------------------
@@ -30,8 +36,8 @@ Security Controls Summary
      - File descriptor leakage on ``execve`` or ``MSG_CTRUNC`` truncation
      - Pass ``MSG_CMSG_CLOEXEC`` to ``recvmsg`` and close all extracted FDs on ``MSG_CTRUNC`` or parse error
    * - SEC-05
-     - Thread race or zero wrap-around in message serials and signal queue
-     - Synchronize ``next_serial`` and ``@signal_queue`` with ``Sync::Mutex`` and skip ``0_u32``
+     - Thread race or zero wrap-around in message serials, pending reply channels, and signal queues
+     - Synchronize ``next_serial``, ``@signal_queue``, and pending reply channel maps with ``Sync::Mutex`` and skip ``0_u32``
    * - SEC-06
      - Unbounded container recursion in type signatures
      - Enforce ``MAX_LENGTH = 255`` and independent ``MAX_DEPTH = 32`` limits for arrays and structs

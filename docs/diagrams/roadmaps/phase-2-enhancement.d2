@@ -1,0 +1,51 @@
+direction: right
+
+classes: {
+  task_planned: {
+    shape: rectangle
+    style: {
+      fill: "#eff6ff"
+      stroke: "#2563eb"
+      stroke-width: 2
+      border-radius: 6
+      font-color: "#1e40af"
+      bold: true
+    }
+  }
+  milestone: {
+    style: {
+      fill: "#f8fafc"
+      stroke: "#334155"
+      stroke-width: 2
+      border-radius: 8
+      font-color: "#0f172a"
+      bold: true
+    }
+  }
+}
+
+m2_1: "Milestone 2.1: Multiplexed Fiber Router & Signal Subscriptions" {
+  class: milestone
+  t201: "TASK-201: Multiplexed Fiber Reply Router\n& Pending Serial Map\n[FUNC-007 | TECH-005, TECH-007]" {
+    class: task_planned
+  }
+  t202: "TASK-202: Match-Rule Signal\nSubscription Manager\n[FUNC-007 | TECH-005, TECH-007]" {
+    class: task_planned
+  }
+}
+
+m2_2: "Milestone 2.2: Standard Interface Client Proxies" {
+  class: milestone
+  t203: "TASK-203: PropertiesProxy &\nPropertiesChanged Signal Helper\n[FUNC-006 | TECH-006]" {
+    class: task_planned
+  }
+  t204: "TASK-204: IntrospectableProxy &\nFull Phase 2 QA Verification\n[FUNC-006 | TECH-004, TECH-006]" {
+    class: task_planned
+  }
+}
+
+m2_1.t201 -> m2_1.t202: "Critical Path"
+m2_1.t201 -> m2_2.t203: "Unblocks"
+m2_1.t201 -> m2_2.t204: "Unblocks"
+m2_1.t202 -> m2_2.t203: "Critical Path"
+m2_2.t203 -> m2_2.t204: "Critical Path"

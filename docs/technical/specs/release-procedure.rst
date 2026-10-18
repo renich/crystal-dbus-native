@@ -10,7 +10,7 @@ This document defines the deterministic, repeatable release workflow for ``cryst
 Requirement Mapping
 -------------------
 
-Fulfills ``[FUNC-001]`` through ``[FUNC-006]``.
+Fulfills ``[FUNC-005]``.
 
 Multi-File Version Alignment Checklist
 --------------------------------------
