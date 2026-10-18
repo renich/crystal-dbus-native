@@ -36,13 +36,60 @@ describe Crystal::Dbus::Native::DBusConnection do
     unique_name = conn.start(1000_u32)
     unique_name.should eq(":1.123")
     conn.unique_name.should eq(":1.123")
+    conn.server_guid.should eq("1234567890abcdef")
 
     conn.close
     client.closed?.should be_true
   end
 
+  it "raises DBusError when Hello reply is an Error or malformed" do
+    client, server = UNIXSocket.pair(Socket::Type::STREAM)
+    spawn do
+      msg = Crystal::Dbus::Native::DBusMessage.parse(server)
+      msg.member.should eq("Hello")
+
+      err_reply = Crystal::Dbus::Native::DBusMessage.new(
+        Crystal::Dbus::Native::Endianness::Little,
+        Crystal::Dbus::Native::MessageType::Error,
+        11_u32
+      )
+      err_reply.error_name = "org.freedesktop.DBus.Error.Failed"
+      err_reply.reply_serial = msg.serial
+      err_reply.serialize(server)
+      server.flush
+      server.close
+    end
+
+    conn = Crystal::Dbus::Native::DBusConnection.new(client)
+    expect_raises(Crystal::Dbus::Native::DBusError, "Hello failed") do
+      conn.start(1000_u32, authenticate: false, hello: true)
+    end
+    conn.close
+  end
+
+  it "raises MessageError when Hello reply body is truncated" do
+    client, server = UNIXSocket.pair(Socket::Type::STREAM)
+    spawn do
+      msg = Crystal::Dbus::Native::DBusMessage.parse(server)
+      reply = Crystal::Dbus::Native::DBusMessage.method_return(
+        serial: 12_u32,
+        reply_serial: msg.serial,
+        body: Bytes[10, 0, 0, 0, 'a'.ord.to_u8]
+      )
+      reply.serialize(server)
+      server.flush
+      server.close
+    end
+
+    conn = Crystal::Dbus::Native::DBusConnection.new(client)
+    expect_raises(Crystal::Dbus::Native::MessageError, "String body length exceeds payload bounds") do
+      conn.start(1000_u32, authenticate: false, hello: true)
+    end
+    conn.close
+  end
+
   it "increments serials monotonically in a thread-safe manner" do
-    client, _server = UNIXSocket.pair(Socket::Type::STREAM)
+    client, server = UNIXSocket.pair(Socket::Type::STREAM)
     conn = Crystal::Dbus::Native::DBusConnection.new(client)
 
     serials = Array(UInt32).new
@@ -51,8 +98,8 @@ describe Crystal::Dbus::Native::DBusConnection do
 
     10.times do
       spawn do
-        s = conn.next_serial
-        mutex.synchronize { serials << s }
+        serial_num = conn.next_serial
+        mutex.synchronize { serials << serial_num }
         done.send(nil)
       end
     end
@@ -62,6 +109,6 @@ describe Crystal::Dbus::Native::DBusConnection do
     serials.uniq.size.should eq(10)
 
     conn.close
-    _server.close
+    server.close
   end
 end

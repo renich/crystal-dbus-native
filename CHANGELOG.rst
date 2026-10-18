@@ -4,11 +4,34 @@ Changelog
 
 All notable changes to this project will be documented in this file.
 
-The format is based on `Keep a Changelog <https://keepachangelog.com/en/1.1.0/>`_,
-and this project adheres to `Semantic Versioning <https://semver.org/spec/v2.0.0.html>`_.
+The format is based on `Keep a Changelog <https://keepachangelog.com/en/1.1.0/>`__,
+and this project adheres to `Semantic Versioning <https://semver.org/spec/v2.0.0.html>`__.
 
 [Unreleased]
 ============
+
+[0.2.0] - 2026-10-18
+====================
+
+.. rubric:: Security
+
+- Enforced ``SASLAuthenticator::MAX_LINE_LENGTH`` (4096 bytes) during SASL handshake reads to prevent unbounded memory growth.
+- Fixed ``SecureFDPasser.recv_fds`` to extract and close received file descriptors before raising on ``MSG_CTRUNC`` ancillary truncation.
+- Added multi-header ``cmsghdr`` iteration with strict bounds checks and ``Errno::EINTR`` retry loops in ``SecureFDPasser``.
+- Hardened ``DBusMessage.parse`` to strictly validate endianness (``'l'`` or ``'B'``), reject ``serial == 0``, verify zeroed alignment padding, validate header field codes and variant signatures, and enforce UTF-8/NUL bounds on header strings and signatures.
+
+.. rubric:: Added
+
+- Added ``DBusMessage#read_string_body`` with 64-bit bounds validation and message-endianness decoding.
+- Added ``DBusConnection#server_guid`` getter and ``negotiate_unix_fd`` support in ``DBusConnection#start``.
+- Added ``UNIX_FDS`` header field serialization in ``DBusMessage#serialize``.
+- Added Crystal API docstrings across all public modules, classes, enums, constants, and methods.
+
+.. rubric:: Changed
+
+- Computed ``DBusMessage#body_length`` dynamically from ``@body.size`` to eliminate mutable state desynchronization.
+- Updated ``SignatureValidator`` to track ``ARRAY`` and ``STRUCT``/``DICT_ENTRY`` nesting depths independently up to ``MAX_DEPTH`` (32).
+- Overhauled ``GNUmakefile``, ``.ameba.yml``, ``.gitlab-ci.yml``, and technical documentation to align with Crystal 1.21+ and strict RST linting standards.
 
 [0.1.2] - 2026-09-19
 ====================
@@ -27,7 +50,7 @@ and this project adheres to `Semantic Versioning <https://semver.org/spec/v2.0.0
 - Integrated ``Crystal::EventLoop.current.wait_readable`` and ``wait_writable`` into socket retry loops for non-blocking I/O.
 - Converted all tests to in-memory ``UNIXSocket.pair`` to eliminate filesystem race conditions and leaks.
 
-.. rubric:: Refactored
+.. rubric:: Changed
 
 - Extracted ``apply_field`` in ``DBusMessage`` to reduce cyclomatic complexity and improve modularity.
 
@@ -40,7 +63,7 @@ and this project adheres to `Semantic Versioning <https://semver.org/spec/v2.0.0
 - Added automatic file descriptor cleanup in ``recv_fds`` to prevent leaks on failure paths.
 - Updated deprecated ``sleep 0.2`` calls to ``sleep 0.2.seconds``.
 
-.. rubric:: Refactored
+.. rubric:: Changed
 
 - Decomposed ``SignatureValidator.validate_single_type`` by extracting struct and dict entry sub-validators.
 

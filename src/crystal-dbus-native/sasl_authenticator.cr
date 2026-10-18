@@ -1,8 +1,18 @@
 require "socket"
 
 module Crystal::Dbus::Native
+  # Implements the client-side D-Bus SASL `EXTERNAL` authentication and feature negotiation protocol.
   class SASLAuthenticator
-    def self.authenticate(client : UNIXSocket, uid : UInt32, timeout : Time::Span = 1.second, negotiate_unix_fd : Bool = false) : String
+    # Maximum allowed length in bytes for a single SASL handshake response line.
+    MAX_LINE_LENGTH = 4096
+
+    # Authenticates `client` using the SASL `EXTERNAL` mechanism for `uid` and returns the server GUID.
+    def self.authenticate(
+      client : UNIXSocket,
+      uid : UInt32,
+      timeout : Time::Span = 1.second,
+      negotiate_unix_fd : Bool = false,
+    ) : String
       old_timeout = client.read_timeout
       client.read_timeout = timeout
 
@@ -40,8 +50,11 @@ module Crystal::Dbus::Native
     end
 
     private def self.read_response(client : UNIXSocket) : String
-      line = client.gets("\r\n", chomp: true)
+      line = client.gets(limit: MAX_LINE_LENGTH, chomp: true)
       raise ConnectionClosedError.new("Connection closed during SASL handshake") if line.nil?
+      if line.bytesize >= MAX_LINE_LENGTH - 1
+        raise AuthError.new("SASL response line exceeds maximum length")
+      end
       line
     rescue IO::TimeoutError
       raise AuthError.new("SASL handshake timed out")

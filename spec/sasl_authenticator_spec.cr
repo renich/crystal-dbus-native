@@ -65,15 +65,36 @@ describe Crystal::Dbus::Native::SASLAuthenticator do
 
     it "raises exception on read timeout" do
       client, server = UNIXSocket.pair(Socket::Type::STREAM)
+      done = Channel(Nil).new(1)
       spawn do
         server.read_byte
         server.gets("\r\n")
-        sleep 0.05.seconds
+        done.receive
         server.close unless server.closed?
       end
 
-      expect_raises(Crystal::Dbus::Native::AuthError, "SASL handshake timed out") do
-        Crystal::Dbus::Native::SASLAuthenticator.authenticate(client, 1000_u32, timeout: 0.01.seconds)
+      begin
+        expect_raises(Crystal::Dbus::Native::AuthError, "SASL handshake timed out") do
+          Crystal::Dbus::Native::SASLAuthenticator.authenticate(client, 1000_u32, timeout: 0.01.seconds)
+        end
+      ensure
+        done.send(nil)
+        client.close
+      end
+    end
+
+    it "raises exception when SASL response line exceeds maximum length" do
+      client, server = UNIXSocket.pair(Socket::Type::STREAM)
+      spawn do
+        server.read_byte
+        server.gets("\r\n")
+        server << "OK " << ("a" * 4100) << "\r\n"
+        server.flush
+        server.close
+      end
+
+      expect_raises(Crystal::Dbus::Native::AuthError, "SASL response line exceeds maximum length") do
+        Crystal::Dbus::Native::SASLAuthenticator.authenticate(client, 1000_u32)
       end
       client.close
     end

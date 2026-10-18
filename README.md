@@ -8,10 +8,10 @@ A lightweight, zero-dependency, native [Crystal](https://crystal-lang.org/) impl
 ## Features
 
 - **Zero C-Library Dependencies**: Interacts directly with UNIX domain sockets (`/var/run/dbus/system_bus_socket`).
-- **SASL `EXTERNAL` Authentication**: Native authentication handshake using host UID.
-- **Secure File Descriptor Passing**: Encapsulates `sendmsg`/`recvmsg` and `SCM_RIGHTS` ancillary data with guaranteed descriptor cleanup on error paths.
-- **Strict Signature Validation**: Validates complex and nested D-Bus type signatures (`ay`, `a{sv}`, `(is)`, etc.) with depth limits.
-- **Clean Transport Lifecycle**: Explicit socket timeouts and memory-safe message marshalling.
+- **SASL `EXTERNAL` Authentication**: Native authentication handshake using host UID and optional `NEGOTIATE_UNIX_FD` negotiation.
+- **Secure File Descriptor Passing**: Encapsulates `sendmsg`/`recvmsg` and `SCM_RIGHTS` ancillary data with `MSG_CMSG_CLOEXEC` and guaranteed descriptor cleanup on error and truncation paths.
+- **Strict Signature Validation**: Validates complex and nested D-Bus type signatures (`ay`, `a{sv}`, `(is)`, etc.) with independent 32-level array and struct depth limits.
+- **Clean Transport Lifecycle**: Explicit socket timeouts, thread-safe serial allocation, and memory-safe message framing.
 
 ## Installation
 
@@ -20,8 +20,8 @@ Add this to your application's `shard.yml`:
 ```yaml
 dependencies:
   crystal-dbus-native:
-    github: renich/crystal-dbus-native
-    version: ~> 0.1.1
+    gitlab: renich/crystal-dbus-native
+    version: ~> 0.2.0
 ```
 
 Then run:
@@ -34,21 +34,13 @@ shards install
 
 ```crystal
 require "crystal-dbus-native"
-require "socket"
 
-# Connect to system or session bus
-socket = UNIXSocket.new("/var/run/dbus/system_bus_socket")
+# Connect to the system or session bus and perform SASL + Hello handshake
+connection = Crystal::Dbus::Native::DBusConnection.open_system
+unique_name = connection.start
+puts "Connected to D-Bus (unique name: #{unique_name}, GUID: #{connection.server_guid})"
 
-# Authenticate via SASL EXTERNAL
-uid = LibC.getuid
-guid = Crystal::Dbus::Native::SASLAuthenticator.authenticate(socket, uid)
-puts "Authenticated with D-Bus daemon (GUID: #{guid})"
-
-# Initialize native D-Bus connection
-connection = Crystal::Dbus::Native::DBusConnection.new(socket)
-connection.start
-
-# Validate D-Bus type signature
+# Validate a D-Bus type signature
 Crystal::Dbus::Native::SignatureValidator.validate("a{sv}")
 puts "Signature valid!"
 
@@ -60,16 +52,19 @@ connection.close
 Build targets and test suites are managed via GNU Make:
 
 ```bash
-make all      # Runs linting (Ameba & Flaw) and the full test suite
+make all      # Runs linting (format check, Ameba --all, Flaw) and the full spec suite
 make test     # Executes crystal spec
-make lint     # Executes Ameba static analysis and Flaw scanner
+make lint     # Executes crystal tool format --check, Ameba --all, and Flaw scanner
 make docs     # Generates API documentation into docs/technical/api
 ```
 
 ## Documentation
 
-- **API Documentation**: Generated HTML docs located at [`docs/technical/api/`](docs/technical/api/index.html).
+- **White Paper**: [`docs/whitepaper.rst`](docs/whitepaper.rst)
 - **Technical Specification**: [`docs/technical/spec.rst`](docs/technical/spec.rst)
+- **Architecture & Design**: [`docs/technical/architecture.rst`](docs/technical/architecture.rst)
+- **Security Considerations**: [`docs/technical/security.rst`](docs/technical/security.rst)
+- **API Documentation**: Generated HTML docs located at [`docs/technical/api/`](docs/technical/api/index.html)
 - **Project Roadmap**: [`docs/project/roadmap.rst`](docs/project/roadmap.rst)
 - **Changelog**: [`CHANGELOG.rst`](CHANGELOG.rst)
 - **Code of Honor**: [`docs/technical/CODE_OF_HONOR.rst`](docs/technical/CODE_OF_HONOR.rst)
